@@ -25,6 +25,8 @@ function Document_ImageInfo() {
     }
   };
 
+  
+
   if (!data) {
     return <div>Loading...</div>;
   }
