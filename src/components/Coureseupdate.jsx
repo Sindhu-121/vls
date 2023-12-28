@@ -20,6 +20,14 @@ const Coureseupdate = () => {
   const [questionTypes, setQuestionTypes] = useState([]);
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState([]);
 
+
+
+  
+
+
+
+
+
   useEffect(() => {
     const fetchData = async () => {
       try {
