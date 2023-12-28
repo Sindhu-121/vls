@@ -3660,22 +3660,41 @@ app.put("/updateQuestion/:questionId", upload.array("images"), async (req, res) 
     //   });
     // }
 
-    app.post('/uploadFile/:type/:main_key', upload.single('file'), (req, res) => {
-      // Access the uploaded file information
-      const file = req.file;
-      const type=req.params.type;
-      const p_key=req.params.main_key;
-      if(type=="question"){
-        const sql="update question set question_imag='' where question_id=p_key"
-
-      }else if(type=="option"){
-
+    app.post('/uploadFile/:type/:main_key', upload.single('file'), async (req, res) => {
+      try {
+        // Access the uploaded file information
+        const file = req.file;
+        console.log(file)
+        const type = req.params.type;
+        const p_key = req.params.main_key;
+    
+        if (!file) {
+          return res.status(400).json({ message: 'No file uploaded' });
+        }
+    
+        // Convert the file buffer to base64
+        const bufferData = file.buffer;
+        console.log(bufferData)
+    
+        // Log the base64Data
+        // console.log('Base64 Data:', base64Data);
+    
+        // Convert base64 to a Buffer
+        // const bufferData = Buffer.from(base64Data, 'base64');
+    
+        if (type === "question") {
+          const updateQuery = 'UPDATE questions SET question_img=? WHERE question_id=?';
+          await db.query(updateQuery, [bufferData, p_key]);
+        } else if (type === "option") {
+          // Handle option logic if needed
+        }
+    
+        // Respond with a success message
+        res.json({ message: 'File uploaded successfully' });
+      } catch (error) {
+        console.error('Error uploading file:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
       }
-    
-      // Do something with the file, e.g., save the file path to a database
-    
-      // Respond with a success message
-      res.json({ message: 'File uploaded successfully', filePath: file.path });
     });
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
