@@ -3721,6 +3721,7 @@ app.put("/updateQuestion/:questionId", upload.array("images"), async (req, res) 
               });
               const document_Id = documentResult.insertId;
      
+              
      
         // Get all images in the order they appear in the HTML
         const images = [];
