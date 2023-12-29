@@ -3703,7 +3703,7 @@ app.put("/updateQuestion/:questionId", upload.array("images"), async (req, res) 
     
 app.post('/upload', upload.single('document'), async (req, res) => {
   const docxFilePath = `uploads/${req.file.filename}`;
-  const outputDir = `uploads/${req.file.originalname}_images`;
+  const outputDir = `uploads/${req.file.originalname}`;
   const docName = `${req.file.originalname}`;
   try {
     await fs.mkdir(outputDir, { recursive: true });
