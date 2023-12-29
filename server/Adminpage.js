@@ -3737,7 +3737,7 @@ app.post('/upload', upload.single('document'), async (req, res) => {
       const j = i % 6; // Calculate the index within the 6-image cycle
  
       // Save the snapshot image as a PNG file
-      const imageName = `snapshot_${Math.floor(i / 6) + 1}_${j}.png`;
+       const imageName = getImageName(j, i);
       const imagePath = `${outputDir}/${imageName}`;
       await fs.writeFile(imagePath, images[i]);
  
@@ -3753,25 +3753,65 @@ app.post('/upload', upload.single('document'), async (req, res) => {
         console.log(j);
         Question_id = await insertRecord('questions', questionRecord);
         question_id.push(Question_id)
-      } else {
-        // For subsequent images, save as options or solution
-        if (j < 5) {
-          const optionRecord = {
-            optionImgName: imageName,
-            question_id: Question_id
-          };
-          console.log(j);
-          await insertRecord('options', optionRecord);
-        } else {
+      }else {
+        // For subsequent images
+        if (j === 5) {
+          // For the last image (solution)
           const solutionRecord = {
             solutionImgName: imageName,
-            question_id: Question_id
+            question_id: Question_id,
           };
           console.log(j);
           await insertRecord('solution', solutionRecord);
+        } else {
+          // For images 1 to 4 (options)
+          const optionRecord = {
+            optionImgName: imageName,
+            question_id: Question_id,
+          };
+          console.log(j);
+          await insertRecord('options', optionRecord);
         }
       }
     }
+    function getImageName(index, i) {
+      switch (index) {
+        case 0:
+          return `questions_${Math.floor(i / 6) + 1}.png`;
+        case 1:
+          return `option_a_${Math.floor(i / 6) + 1}.${i % 6 - 1}.png`;
+        case 2:
+          return `option_b_${Math.floor(i / 6) + 1}.${i % 6 - 1}.png`;
+        case 3:
+          return `option_c_${Math.floor(i / 6) + 1}.${i % 6 - 1}.png`;
+        case 4:
+          return `option_d_${Math.floor(i / 6) + 1}.${i % 6 - 1}.png`;
+        case 5:
+          return `solution_${Math.floor(i / 6) + 1}.png`;
+        default:
+          return `unknown_${i}.png`;
+      }
+    }
+
+    //   else {
+    //     // For subsequent images, save as options or solution
+    //     if (j < 5) {
+    //       const optionRecord = {
+    //         optionImgName: imageName,
+    //         question_id: Question_id
+    //       };
+    //       console.log(j);
+    //       await insertRecord('options', optionRecord);
+    //     } else {
+    //       const solutionRecord = {
+    //         solutionImgName: imageName,
+    //         question_id: Question_id
+    //       };
+    //       console.log(j);
+    //       await insertRecord('solution', solutionRecord);
+    //     }
+    //   }
+    // }
     let j=0;
     let que_id;
     for (let i = 0; i < textSections.length; i++) {
@@ -3807,34 +3847,138 @@ app.post('/upload', upload.single('document'), async (req, res) => {
     res.status(500).send('Error extracting content and saving it to the database.');
   }
 });
-async function insertRecord(table, record) {
-  try {
-    const [result] = await db.query(`INSERT INTO ${table} SET ?`, record);
-    console.log(`${table} id: ${result.insertId}`);
-    return result.insertId;
-  } catch (err) {
-    console.error(`Error inserting data into ${table}: ${err}`);
-    throw err;
-  }
-}
 
-const imagesDirectory = path.join(__dirname, 'uploads');
-app.use('/uploads', express.static(imagesDirectory));
 
-app.use(express.json());
-app.use('/images', express.static(imagesDirectory));
 
-app.get('/image-list', async (req, res) => {
-  try {
-    const files = await fs.readdir(imagesDirectory);
-    console.log('Files in uploads directory:', files);
-    const imageNames = files.filter(file => file.endsWith('.png'));
-    res.json(imageNames);
-  } catch (error) {
-    console.error('Error fetching image list:', error);
-    res.status(500).send('Error fetching image list.');
-  }
-});
+
+// app.post('/upload', upload.single('document'), async (req, res) => {
+//   const docxFilePath = `uploads/${req.file.filename}`;
+//   const outputDir = `uploads/${req.file.originalname}`;
+//   const docName = `${req.file.originalname}`;
+
+//   try {
+//     await fs.mkdir(outputDir, { recursive: true });
+
+//     const result = await mammoth.convertToHtml({ path: docxFilePath });
+//     const htmlContent = result.value;
+//     const $ = cheerio.load(htmlContent);
+
+//     const textResult = await mammoth.extractRawText({ path: docxFilePath });
+//     const textContent = textResult.value;
+//     const textSections = textContent.split('\n\n');
+
+//     const [documentResult] = await db.query("INSERT INTO ots_document SET ?", {
+//       documen_name: docName,
+//       testCreationTableId: req.body.testCreationTableId,
+//       subjectId: req.body.subjectId,
+//     });
+//     const document_Id = documentResult.insertId;
+
+//     const images = [];
+//     let saveImage = false;
+
+//     for (let i = 0; i < textSections.length; i++) {
+//       switch (true) {
+//         case textSections[i].startsWith('[Q]'):
+//           const questionsRecord = {
+//             questionImgName: `imageNames/${textSections[i].replace('[Q]', '')}`,
+//             // document_id: document_Id,
+//           };
+//           await insertRecord('questions', questionsRecord);
+//           saveImage = true;
+//           break;
+//         case textSections[i].startsWith('(a)'):
+//         case textSections[i].startsWith('(b)'):
+//         case textSections[i].startsWith('(c)'):
+//         case textSections[i].startsWith('(d)'):
+//           const optionsRecord = {
+//             optionImgName: `imageNames/${textSections[i].replace(/\([a-d]\)/, '')}`,
+//             // document_id: document_Id,
+//           };
+//           await insertRecord('options', optionsRecord);
+//           break;
+//         case textSections[i].startsWith('[qtype]'):
+//           const qtypeRecord = {
+//             qtype_text: textSections[i].replace('[qtype]', ''),
+//             // question_id: document_Id,
+//           };
+//           await insertRecord('qtype', qtypeRecord);
+//           break;
+//         case textSections[i].startsWith('[ans]'):
+//           const answerRecord = {
+//             answer_text: textSections[i].replace('[ans]', ''),
+//             // question_id: document_Id,
+//           };
+//           await insertRecord('answer', answerRecord);
+//           break;
+//         case textSections[i].startsWith('[Marks]'):
+//           const marksRecord = {
+//             marks_text: textSections[i].replace('[Marks]', ''),
+//             // question_id: document_Id,
+//           };
+//           await insertRecord('marks', marksRecord);
+//           break;
+//         case textSections[i].startsWith('[soln]'):
+//           const solutionRecord = {
+//             solutionImgName: `imageNames/${textSections[i].replace('[soln]', '')}`,
+//             // document_id: document_Id,
+//           };
+//           await insertRecord('solution', solutionRecord);
+//           break;
+//         default:
+//           if (saveImage && textSections[i].startsWith('<img')) {
+//             const imgSrcMatch = /src="([^"]+)"/.exec(textSections[i]);
+//             if (imgSrcMatch) {
+//               const base64Data = imgSrcMatch[1].replace(/^data:image\/\w+;base64,/, '');
+//               const imageBuffer = Buffer.from(base64Data, 'base64');
+//               images.push(imageBuffer);
+//             }
+//           }
+//           break;
+//       }
+//     }
+
+//     // Save images to the 'uploads' folder
+//     for (let i = 0; i < images.length; i++) {
+//       await fs.writeFile(`uploads/image_${i + 1}.png`, images[i]);
+//     }
+
+//     // Rest of your code...
+
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// async function insertRecord(table, record) {
+//   try {
+//     const [result] = await db.query(`INSERT INTO ${table} SET ?`, record);
+//     console.log(`${table} id: ${result.insertId}`);
+//     return result.insertId;
+//   } catch (err) {
+//     console.error(`Error inserting data into ${table}: ${err}`);
+//     throw err;
+//   }
+// }
+
+// const imagesDirectory = path.join(__dirname, 'uploads');
+// app.use('/uploads', express.static(imagesDirectory));
+
+// app.use(express.json());
+// app.use('/images', express.static(imagesDirectory));
+
+// app.get('/image-list', async (req, res) => {
+//   try {
+//     const files = await fs.readdir(imagesDirectory);
+//     console.log('Files in uploads directory:', files);
+//     const imageNames = files.filter(file => file.endsWith('.png'));
+//     res.json(imageNames);
+//   } catch (error) {
+//     console.error('Error fetching image list:', error);
+//     res.status(500).send('Error fetching image list.');
+//   }
+// });
 
 
 
