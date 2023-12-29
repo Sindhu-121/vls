@@ -3701,152 +3701,140 @@ app.put("/updateQuestion/:questionId", upload.array("images"), async (req, res) 
 
 
     
-app.post('/upload', upload.single('document'), async (req, res) => {
-  const docxFilePath = `uploads/${req.file.filename}`;
-  const outputDir = `uploads/${req.file.originalname}`;
-  const docName = `${req.file.originalname}`;
-  try {
-    await fs.mkdir(outputDir, { recursive: true });
-    const result = await mammoth.convertToHtml({ path: docxFilePath });
-    const htmlContent = result.value;
-    const $ = cheerio.load(htmlContent);
-    const textResult = await mammoth.extractRawText({ path: docxFilePath });
-    const textContent = textResult.value;
-    const textSections = textContent.split('\n\n');
- 
-    const [documentResult] = await db.query("INSERT INTO ots_document SET ?", {
-      documen_name: docName,
-            testCreationTableId: req.body.testCreationTableId,
-            subjectId: req.body.subjectId,
-          });
-          const document_Id = documentResult.insertId;
-
-
-    // Get all images in the order they appear in the HTML
-    const images = [];
-    $('img').each(function (i, element) {
-      const base64Data = $(this).attr('src').replace(/^data:image\/\w+;base64,/, '');
-      const imageBuffer = Buffer.from(base64Data, 'base64');
-      images.push(imageBuffer);
-    });
- 
-    let Question_id;
-    let question_id=[];
- 
-    for (let i = 0; i < images.length; i++) {
-      const j = i % 6; // Calculate the index within the 6-image cycle
- 
-      // Save the snapshot image as a PNG file
-       const imageName = getImageName(j, i);
-      const imagePath = `${outputDir}/${imageName}`;
-      await fs.writeFile(imagePath, images[i]);
- 
-      if (j === 0) {
-        // For the first image, save it as a question
-        const questionRecord = {
-          questionImgName: imageName,
-          testCreationTableId: req.body.testCreationTableId,
-          subjectId: req.body.subjectId,
-          document_Id: document_Id,
-          sectionId: req.body.sectionId
-        };
-        console.log(j);
-        Question_id = await insertRecord('questions', questionRecord);
-        question_id.push(Question_id)
-      }else {
-        // For subsequent images
-        if (j === 5) {
-          // For the last image (solution)
-          const solutionRecord = {
-            solutionImgName: imageName,
-            question_id: Question_id,
-          };
-          console.log(j);
-          await insertRecord('solution', solutionRecord);
-        } else {
-          // For images 1 to 4 (options)
-          const optionRecord = {
-            optionImgName: imageName,
-            question_id: Question_id,
-          };
-          console.log(j);
-          await insertRecord('options', optionRecord);
+    app.post('/upload', upload.single('document'), async (req, res) => {
+      const docxFilePath = `uploads/${req.file.filename}`;
+      const outputDir = `uploads/${req.file.originalname}_images`;
+      const docName = `${req.file.originalname}`;
+      try {
+        await fs.mkdir(outputDir, { recursive: true });
+        const result = await mammoth.convertToHtml({ path: docxFilePath });
+        const htmlContent = result.value;
+        const $ = cheerio.load(htmlContent);
+        const textResult = await mammoth.extractRawText({ path: docxFilePath });
+        const textContent = textResult.value;
+        const textSections = textContent.split('\n\n');
+     
+        const [documentResult] = await db.query("INSERT INTO ots_document SET ?", {
+          documen_name: docName,
+                testCreationTableId: req.body.testCreationTableId,
+                subjectId: req.body.subjectId,
+              });
+              const document_Id = documentResult.insertId;
+     
+     
+        // Get all images in the order they appear in the HTML
+        const images = [];
+        $('img').each(function (i, element) {
+          const base64Data = $(this).attr('src').replace(/^data:image\/\w+;base64,/, '');
+          const imageBuffer = Buffer.from(base64Data, 'base64');
+          images.push(imageBuffer);
+        });
+     
+        let Question_id;
+        let question_id=[];
+     
+        for (let i = 0; i < images.length; i++) {
+          const j = i % 6; // Calculate the index within the 6-image cycle
+     
+          // Save the snapshot image as a PNG file
+          const imageName = `snapshot_${Math.floor(i / 6) + 1}_${j}.png`;
+          const imagePath = `${outputDir}/${imageName}`;
+          await fs.writeFile(imagePath, images[i]);
+     
+          if (j === 0) {
+            // For the first image, save it as a question
+            const questionRecord = {
+              questionImgName: imageName,
+              testCreationTableId: req.body.testCreationTableId,
+              subjectId: req.body.subjectId,
+              document_Id: document_Id,
+              sectionId: req.body.sectionId
+            };
+            console.log(j);
+            Question_id = await insertRecord('questions', questionRecord);
+            question_id.push(Question_id)
+          } else {
+            // For subsequent images, save as options or solution
+            if (j < 5) {
+              const optionRecord = {
+                optionImgName: imageName,
+                question_id: Question_id
+              };
+              console.log(j);
+              await insertRecord('options', optionRecord);
+            } else {
+              const solutionRecord = {
+                solutionImgName: imageName,
+                question_id: Question_id
+              };
+              console.log(j);
+              await insertRecord('solution', solutionRecord);
+            }
+          }
         }
+        let j=0;
+        let que_id;
+        for (let i = 0; i < textSections.length; i++) {
+          if (textSections[i].startsWith('[qtype]')) {
+            que_id=question_id[j];
+            j++;
+            // Save in the qtype table
+            const qtypeRecord = {
+              qtype_text: textSections[i].replace('[qtype]', ''),
+              question_id: que_id
+            };
+            await insertRecord('qtype', qtypeRecord);
+          } else if (textSections[i].startsWith('[ans]')) {
+            // Save in the answer table
+            const answerRecord = {
+              answer_text: textSections[i].replace('[ans]', ''),
+              question_id: que_id
+            };
+            await insertRecord('answer', answerRecord);
+          } else if (textSections[i].startsWith('[Marks]')) {
+            // Save in the marks table
+            const marksRecord = {
+              marks_text: textSections[i].replace('[Marks]', ''),
+              question_id: que_id
+            };
+            await insertRecord('marks', marksRecord);
+          }
+        }
+     
+        res.send('Text content and images extracted and saved to the database with the selected topic ID successfully.');
+      } catch (error) {
+        console.error(error);
+        res.status(500).send('Error extracting content and saving it to the database.');
+      }
+    });
+    async function insertRecord(table, record) {
+      try {
+        const [result] = await db.query(`INSERT INTO ${table} SET ?`, record);
+        console.log(`${table} id: ${result.insertId}`);
+        return result.insertId;
+      } catch (err) {
+        console.error(`Error inserting data into ${table}: ${err}`);
+        throw err;
       }
     }
-    function getImageName(index, i) {
-      switch (index) {
-        case 0:
-          return `questions_${Math.floor(i / 6) + 1}.png`;
-        case 1:
-          return `option_a_${Math.floor(i / 6) + 1}.${i % 6 - 1}.png`;
-        case 2:
-          return `option_b_${Math.floor(i / 6) + 1}.${i % 6 - 1}.png`;
-        case 3:
-          return `option_c_${Math.floor(i / 6) + 1}.${i % 6 - 1}.png`;
-        case 4:
-          return `option_d_${Math.floor(i / 6) + 1}.${i % 6 - 1}.png`;
-        case 5:
-          return `solution_${Math.floor(i / 6) + 1}.png`;
-        default:
-          return `unknown_${i}.png`;
+     
+    const imagesDirectory = path.join(__dirname, 'uploads');
+    app.use('/uploads', express.static(imagesDirectory));
+     
+    app.use(express.json());
+    app.use('/images', express.static(imagesDirectory));
+     
+    app.get('/image-list', async (req, res) => {
+      try {
+        const files = await fs.readdir(imagesDirectory);
+        console.log('Files in uploads directory:', files);
+        const imageNames = files.filter(file => file.endsWith('.png'));
+        res.json(imageNames);
+      } catch (error) {
+        console.error('Error fetching image list:', error);
+        res.status(500).send('Error fetching image list.');
       }
-    }
-
-    //   else {
-    //     // For subsequent images, save as options or solution
-    //     if (j < 5) {
-    //       const optionRecord = {
-    //         optionImgName: imageName,
-    //         question_id: Question_id
-    //       };
-    //       console.log(j);
-    //       await insertRecord('options', optionRecord);
-    //     } else {
-    //       const solutionRecord = {
-    //         solutionImgName: imageName,
-    //         question_id: Question_id
-    //       };
-    //       console.log(j);
-    //       await insertRecord('solution', solutionRecord);
-    //     }
-    //   }
-    // }
-    let j=0;
-    let que_id;
-    for (let i = 0; i < textSections.length; i++) {
-      if (textSections[i].startsWith('[qtype]')) {
-        que_id=question_id[j];
-        j++;
-        // Save in the qtype table
-        const qtypeRecord = {
-          qtype_text: textSections[i].replace('[qtype]', ''),
-          question_id: que_id
-        };
-        await insertRecord('qtype', qtypeRecord);
-      } else if (textSections[i].startsWith('[ans]')) {
-        // Save in the answer table
-        const answerRecord = {
-          answer_text: textSections[i].replace('[ans]', ''),
-          question_id: que_id
-        };
-        await insertRecord('answer', answerRecord);
-      } else if (textSections[i].startsWith('[Marks]')) {
-        // Save in the marks table
-        const marksRecord = {
-          marks_text: textSections[i].replace('[Marks]', ''),
-          question_id: que_id
-        };
-        await insertRecord('marks', marksRecord);
-      }
-    }
- 
-    res.send('Text content and images extracted and saved to the database with the selected topic ID successfully.');
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Error extracting content and saving it to the database.');
-  }
-});
+    });
 
 
 
@@ -3948,35 +3936,6 @@ app.post('/upload', upload.single('document'), async (req, res) => {
 //   } catch (error) {
 //     console.error(error);
 //     res.status(500).send('Internal Server Error');
-//   }
-// });
-
-// async function insertRecord(table, record) {
-//   try {
-//     const [result] = await db.query(`INSERT INTO ${table} SET ?`, record);
-//     console.log(`${table} id: ${result.insertId}`);
-//     return result.insertId;
-//   } catch (err) {
-//     console.error(`Error inserting data into ${table}: ${err}`);
-//     throw err;
-//   }
-// }
-
-// const imagesDirectory = path.join(__dirname, 'uploads');
-// app.use('/uploads', express.static(imagesDirectory));
-
-// app.use(express.json());
-// app.use('/images', express.static(imagesDirectory));
-
-// app.get('/image-list', async (req, res) => {
-//   try {
-//     const files = await fs.readdir(imagesDirectory);
-//     console.log('Files in uploads directory:', files);
-//     const imageNames = files.filter(file => file.endsWith('.png'));
-//     res.json(imageNames);
-//   } catch (error) {
-//     console.error('Error fetching image list:', error);
-//     res.status(500).send('Error fetching image list.');
 //   }
 // });
 
