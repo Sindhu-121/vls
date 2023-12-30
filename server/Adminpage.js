@@ -2346,286 +2346,286 @@ app.get("/documentName", async (req, res) => {
 //   return combinedImages;
 // }
 
-app.get("/getSubjectData/:subjectId/:testCreationTableId/:sectionId", async (req, res) => {
-  try {
-    const subjectId = req.params.subjectId;
-    const testCreationTableId = req.params.testCreationTableId;
-    const sectionId = req.params.sectionId;
+// app.get("/getSubjectData/:subjectId/:testCreationTableId/:sectionId", async (req, res) => {
+//   try {
+//     const subjectId = req.params.subjectId;
+//     const testCreationTableId = req.params.testCreationTableId;
+//     const sectionId = req.params.sectionId;
 
-    // Fetch document data based on subjectId, testCreationTableId, and sectionId
-    const documentData = await dbHelper.getDocumentBySubjectAndTestCreationIdSectionId(
-      subjectId,
-      testCreationTableId,
-      sectionId
-    );
+//     // Fetch document data based on subjectId, testCreationTableId, and sectionId
+//     const documentData = await dbHelper.getDocumentBySubjectAndTestCreationIdSectionId(
+//       subjectId,
+//       testCreationTableId,
+//       sectionId
+//     );
 
-    if (!documentData) {
-      return res.status(404).send("Document not found");
-    }
+//     if (!documentData) {
+//       return res.status(404).send("Document not found");
+//     }
 
-    const document_Id = documentData.document_Id;
+//     const document_Id = documentData.document_Id;
 
-    // Fetch question data based on subjectId, document_Id, and sectionId
-    const questions = await dbHelper.getQuestionsBySubjectAndDocumentId(
-      subjectId,
-      document_Id,
-      sectionId
-    );
+//     // Fetch question data based on subjectId, document_Id, and sectionId
+//     const questions = await dbHelper.getQuestionsBySubjectAndDocumentId(
+//       subjectId,
+//       document_Id,
+//       sectionId
+//     );
 
-    // Fetch option data based on questions and document_Id
-    const options = await dbHelper.getOptionsByQuestionsAndDocumentId(
-      questions,
-      document_Id
-    );
+//     // Fetch option data based on questions and document_Id
+//     const options = await dbHelper.getOptionsByQuestionsAndDocumentId(
+//       questions,
+//       document_Id
+//     );
 
-    // Fetch solution data based on questions and document_Id
-    const solutions = await dbHelper.getSolutionsByQuestionsAndDocumentId(
-      questions,
-      document_Id
-    );
+//     // Fetch solution data based on questions and document_Id
+//     const solutions = await dbHelper.getSolutionsByQuestionsAndDocumentId(
+//       questions,
+//       document_Id
+//     );
 
-    // Fetch answers data based on questions and document_Id
-    const answers = await dbHelper.getAnswersByQuestionsAndDocumentId(
-      questions,
-      document_Id
-    );
+//     // Fetch answers data based on questions and document_Id
+//     const answers = await dbHelper.getAnswersByQuestionsAndDocumentId(
+//       questions,
+//       document_Id
+//     );
 
-    // Fetch marks data based on questions and document_Id
-    const marks = await dbHelper.getMarksByQuestionsAndDocumentId(
-      questions,
-      document_Id
-    );
+//     // Fetch marks data based on questions and document_Id
+//     const marks = await dbHelper.getMarksByQuestionsAndDocumentId(
+//       questions,
+//       document_Id
+//     );
 
-    // Fetch qtypes data based on questions and document_Id
-    const qtypes = await dbHelper.getQTypesByQuestionsAndDocumentId(
-      questions,
-      document_Id
-    );
-    const sortid = await dbHelper.getsortidByQuestionsAndDocumentId(
-      questions,
-      document_Id
-    );
+//     // Fetch qtypes data based on questions and document_Id
+//     const qtypes = await dbHelper.getQTypesByQuestionsAndDocumentId(
+//       questions,
+//       document_Id
+//     );
+//     const sortid = await dbHelper.getsortidByQuestionsAndDocumentId(
+//       questions,
+//       document_Id
+//     );
 
-    // Combine images
-    const combinedImages = dbHelper.combineImage(questions, options, solutions);
+//     // Combine images
+//     const combinedImages = dbHelper.combineImage(questions, options, solutions);
 
-    // Respond with the fetched data
-    res.json({
-      document: documentData,
-      questions,
-      options,
-      solutions,
-      answers,
-      marks,
-      qtypes,
-      sortid,
-      combinedImages,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error fetching data from the database.");
-  }
-});
+//     // Respond with the fetched data
+//     res.json({
+//       document: documentData,
+//       questions,
+//       options,
+//       solutions,
+//       answers,
+//       marks,
+//       qtypes,
+//       sortid,
+//       combinedImages,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("Error fetching data from the database.");
+//   }
+// });
 
-class DatabaseHelper {
-  constructor(db) {
-    this.db = db;
-  }
+// class DatabaseHelper {
+//   constructor(db) {
+//     this.db = db;
+//   }
 
-async getDocumentBySubjectAndTestCreationIdSectionId(subjectId, testCreationTableId, sectionId) {
-  try {
-    const query = `
-      SELECT document_Id, testCreationTableId, documen_name
-      FROM ots_document
-      WHERE subjectId = ? AND testCreationTableId = ? AND sectionId = ?
-    `;
-    const [result] = await this.db.query(query, [subjectId, testCreationTableId, sectionId]);
-    return result[0];
-  } catch (err) {
-    console.error(`Error fetching document details: ${err}`);
-    throw err;
-  }
-}
+// async getDocumentBySubjectAndTestCreationIdSectionId(subjectId, testCreationTableId, sectionId) {
+//   try {
+//     const query = `
+//       SELECT document_Id, testCreationTableId, documen_name
+//       FROM ots_document
+//       WHERE subjectId = ? AND testCreationTableId = ? AND sectionId = ?
+//     `;
+//     const [result] = await this.db.query(query, [subjectId, testCreationTableId, sectionId]);
+//     return result[0];
+//   } catch (err) {
+//     console.error(`Error fetching document details: ${err}`);
+//     throw err;
+//   }
+// }
 
-// Reusable function to get questions data based on subjectId and document_Id
-async getQuestionsBySubjectAndDocumentId(subjectId, document_Id) {
-  try {
-    const query = `
-      SELECT question_id, question_img
-      FROM questions
-      WHERE subjectId = ? AND document_Id = ?  
-    `;
-    const [results] = await this.db.query(query, [subjectId, document_Id]);
-    const questionsWithBase64 = results.map((question) => ({
-      question_id: question.question_id,
-      question_img: question.question_img.toString("base64"),
-    }));
-    return questionsWithBase64;
-  } catch (err) {
-    console.error(`Error fetching questions: ${err}`);
-    throw err;
-  }
-}
+// // Reusable function to get questions data based on subjectId and document_Id
+// async getQuestionsBySubjectAndDocumentId(subjectId, document_Id) {
+//   try {
+//     const query = `
+//       SELECT question_id, question_img
+//       FROM questions
+//       WHERE subjectId = ? AND document_Id = ?  
+//     `;
+//     const [results] = await this.db.query(query, [subjectId, document_Id]);
+//     const questionsWithBase64 = results.map((question) => ({
+//       question_id: question.question_id,
+//       question_img: question.question_img.toString("base64"),
+//     }));
+//     return questionsWithBase64;
+//   } catch (err) {
+//     console.error(`Error fetching questions: ${err}`);
+//     throw err;
+//   }
+// }
 
-// Reusable function to get options data based on questions and document_Id
-async getOptionsByQuestionsAndDocumentId(questions, document_Id) {
-  try {
-    const questionIds = questions.map((question) => question.question_id);
-    const query = `
-      SELECT question_id, option_img
-      FROM options
-      WHERE question_id IN (?) 
-    `;
-    const [results] = await this.db.query(query, [questionIds, document_Id]);
+// // Reusable function to get options data based on questions and document_Id
+// async getOptionsByQuestionsAndDocumentId(questions, document_Id) {
+//   try {
+//     const questionIds = questions.map((question) => question.question_id);
+//     const query = `
+//       SELECT question_id, option_img
+//       FROM options
+//       WHERE question_id IN (?) 
+//     `;
+//     const [results] = await this.db.query(query, [questionIds, document_Id]);
 
-    const optionsWithBase64 = results.map((option) => ({
-      question_id: option.question_id,
-      option_img: option.option_img.toString("base64"),
-    }));
+//     const optionsWithBase64 = results.map((option) => ({
+//       question_id: option.question_id,
+//       option_img: option.option_img.toString("base64"),
+//     }));
 
-    return optionsWithBase64;
-  } catch (err) {
-    console.error(`Error fetching options: ${err.message}`);
-    throw err;
-  }
-}
+//     return optionsWithBase64;
+//   } catch (err) {
+//     console.error(`Error fetching options: ${err.message}`);
+//     throw err;
+//   }
+// }
 
-// Reusable function to get solutions data based on questions and document_Id
-async  getSolutionsByQuestionsAndDocumentId(questions, document_Id) {
-  try {
-    const questionIds = questions.map((question) => question.question_id);
-    const query = `
-      SELECT question_id, solution_img
-      FROM solution
-      WHERE question_id IN (?) 
-    `;
-    const [results] = await db.query(query, [questionIds, document_Id]);
+// // Reusable function to get solutions data based on questions and document_Id
+// async  getSolutionsByQuestionsAndDocumentId(questions, document_Id) {
+//   try {
+//     const questionIds = questions.map((question) => question.question_id);
+//     const query = `
+//       SELECT question_id, solution_img
+//       FROM solution
+//       WHERE question_id IN (?) 
+//     `;
+//     const [results] = await db.query(query, [questionIds, document_Id]);
 
-    // Convert BLOB data to base64 for sending in the response
-    const solutionsWithBase64 = results.map((solution) => ({
-      question_id: solution.question_id,
-      solution_img: solution.solution_img.toString("base64"),
-    }));
+//     // Convert BLOB data to base64 for sending in the response
+//     const solutionsWithBase64 = results.map((solution) => ({
+//       question_id: solution.question_id,
+//       solution_img: solution.solution_img.toString("base64"),
+//     }));
 
-    return solutionsWithBase64;
-  } catch (err) {
-    console.error(`Error fetching solutions: ${err}`);
-    throw err;
-  }
-}
+//     return solutionsWithBase64;
+//   } catch (err) {
+//     console.error(`Error fetching solutions: ${err}`);
+//     throw err;
+//   }
+// }
 
-async  getAnswersByQuestionsAndDocumentId(questions, document_Id) {
-  try {
-    const questionIds = questions.map((question) => question.question_id);
-    const query = `
-      SELECT answer_id, question_id, answer_text
-      FROM answer
-      WHERE question_id IN (?) 
-    `;
-    const [results] = await db.query(query, [questionIds, document_Id]);
-    const answers = results.map((answer) => ({
-      answer_id: answer.answer_id,
-      question_id: answer.question_id,
-      answer_text: answer.answer_text,
-    }));
+// async  getAnswersByQuestionsAndDocumentId(questions, document_Id) {
+//   try {
+//     const questionIds = questions.map((question) => question.question_id);
+//     const query = `
+//       SELECT answer_id, question_id, answer_text
+//       FROM answer
+//       WHERE question_id IN (?) 
+//     `;
+//     const [results] = await db.query(query, [questionIds, document_Id]);
+//     const answers = results.map((answer) => ({
+//       answer_id: answer.answer_id,
+//       question_id: answer.question_id,
+//       answer_text: answer.answer_text,
+//     }));
 
-    return answers;
-  } catch (err) {
-    console.error(`Error fetching answers: ${err.message}`);
-    throw err;
-  }
-}
-async  getMarksByQuestionsAndDocumentId(questions, document_Id) {
-  try {
-    const questionIds = questions.map((question) => question.question_id);
-    const query = `
-      SELECT 	markesId, marks_text, question_id
-      FROM marks
-      WHERE question_id IN (?) 
-    `;
-    const [results] = await db.query(query, [questionIds, document_Id]);
+//     return answers;
+//   } catch (err) {
+//     console.error(`Error fetching answers: ${err.message}`);
+//     throw err;
+//   }
+// }
+// async  getMarksByQuestionsAndDocumentId(questions, document_Id) {
+//   try {
+//     const questionIds = questions.map((question) => question.question_id);
+//     const query = `
+//       SELECT 	markesId, marks_text, question_id
+//       FROM marks
+//       WHERE question_id IN (?) 
+//     `;
+//     const [results] = await db.query(query, [questionIds, document_Id]);
 
-    const marks = results.map((mark) => ({
-      markesId: mark.markesId,
-      marks_text: mark.marks_text,
-      question_id: mark.question_id,
-    }));
+//     const marks = results.map((mark) => ({
+//       markesId: mark.markesId,
+//       marks_text: mark.marks_text,
+//       question_id: mark.question_id,
+//     }));
 
-    return marks;
-  } catch (err) {
-    console.error(`Error fetching marks: ${err.message}`);
-    throw err;
-  }
-}
-async  getQTypesByQuestionsAndDocumentId(questions, document_Id) {
-  try {
-    const questionIds = questions.map((question) => question.question_id);
-    const query = `
-      SELECT qtypeId, qtype_text, question_id
-      FROM qtype
-      WHERE question_id IN (?) 
-    `;
-    const [results] = await db.query(query, [questionIds, document_Id]);
+//     return marks;
+//   } catch (err) {
+//     console.error(`Error fetching marks: ${err.message}`);
+//     throw err;
+//   }
+// }
+// async  getQTypesByQuestionsAndDocumentId(questions, document_Id) {
+//   try {
+//     const questionIds = questions.map((question) => question.question_id);
+//     const query = `
+//       SELECT qtypeId, qtype_text, question_id
+//       FROM qtype
+//       WHERE question_id IN (?) 
+//     `;
+//     const [results] = await db.query(query, [questionIds, document_Id]);
 
-    const qtypes = results.map((qtype) => ({
-      qtypeId: qtype.qtypeId,
-      qtype_text: qtype.qtype_text,
-      question_id: qtype.question_id,
-    }));
+//     const qtypes = results.map((qtype) => ({
+//       qtypeId: qtype.qtypeId,
+//       qtype_text: qtype.qtype_text,
+//       question_id: qtype.question_id,
+//     }));
 
-    return qtypes;
-  } catch (err) {
-    console.error(`Error fetching qtypes: ${err.message}`);
-    throw err;
-  }
-}
-async  getsortidByQuestionsAndDocumentId(questions, document_Id) {
-  try {
-    const questionIds = questions.map((question) => question.question_id);
-    const query = `
-      SELECT sort_id,sortid_text, question_id
-      FROM sortid
-      WHERE question_id IN (?) 
-    `;
-    const [results] = await db.query(query, [questionIds, document_Id]);
+//     return qtypes;
+//   } catch (err) {
+//     console.error(`Error fetching qtypes: ${err.message}`);
+//     throw err;
+//   }
+// }
+// async  getsortidByQuestionsAndDocumentId(questions, document_Id) {
+//   try {
+//     const questionIds = questions.map((question) => question.question_id);
+//     const query = `
+//       SELECT sort_id,sortid_text, question_id
+//       FROM sortid
+//       WHERE question_id IN (?) 
+//     `;
+//     const [results] = await db.query(query, [questionIds, document_Id]);
 
-    const sortid = results.map((sortid) => ({
-      sort_id: sortid.sort_id,
-      sortid_text: sortid.sortid_text,
-      question_id: sortid.question_id,
-    }));
+//     const sortid = results.map((sortid) => ({
+//       sort_id: sortid.sort_id,
+//       sortid_text: sortid.sortid_text,
+//       question_id: sortid.question_id,
+//     }));
 
-    return sortid;
-  } catch (err) {
-    console.error(`Error fetching sortid: ${err.message}`);
-    throw err;
-  }
-}
+//     return sortid;
+//   } catch (err) {
+//     console.error(`Error fetching sortid: ${err.message}`);
+//     throw err;
+//   }
+// }
 
 
-combineImage(questions, options, solutions) {
-  const combinedImages = [];
+// combineImage(questions, options, solutions) {
+//   const combinedImages = [];
 
-  for (let i = 0; i < questions.length; i++) {
-    const questionImage = questions[i].question_img;
-    const optionImages = options
-      .filter((opt) => opt.question_id === questions[i].question_id)
-      .map((opt) => opt.option_img);
-    const solutionImage = solutions.find(
-      (sol) => sol.question_id === questions[i].question_id
-    )?.solution_img;
-    combinedImages.push({
-      questionImage,
-      optionImages,
-      solutionImage,
-    });
-  }
+//   for (let i = 0; i < questions.length; i++) {
+//     const questionImage = questions[i].question_img;
+//     const optionImages = options
+//       .filter((opt) => opt.question_id === questions[i].question_id)
+//       .map((opt) => opt.option_img);
+//     const solutionImage = solutions.find(
+//       (sol) => sol.question_id === questions[i].question_id
+//     )?.solution_img;
+//     combinedImages.push({
+//       questionImage,
+//       optionImages,
+//       solutionImage,
+//     });
+//   }
 
-  return combinedImages;
-}
-}
+//   return combinedImages;
+// }
+// }
 
-const dbHelper = new DatabaseHelper(db);
+// const dbHelper = new DatabaseHelper(db);
 // end--------
 //doc delete 
 app.delete('/DocumentDelete/:document_Id', async (req, res) => {
@@ -2788,24 +2788,7 @@ app.get('/examData', async (req, res) => {
       }
     });
 
-    app.get("/singleQuetionRAU/:question_id", async (req, res) => {
-      try {
-        const sql="SELECT q.question_id,q.question_img,o.option_id,o.option_img,s.solution_id,s.solution_img,a.answer_id,a.answer_text,qt.qtypeId,qt.qtype_text,m.markesId,m.marks_text FROM questions q, options o,solution s,answer a , qtype qt , marks m WHERE q.question_id=o.question_id and q.question_id=s.question_id and a.question_id=q.question_id and qt.question_id=q.question_id and m.question_id=q.question_id"
-        const results = await queryDatabase(sql);
-        const data={};
-             results.forEach((row) => {
-        const { question_id,question_img,option_id,option_img,solution_id,solution_img,answer_id,answer_text,qtypeId,qtype_text,markesId,marks_text} = row;
-      
-
-
-
-      });
-
-      } catch (error) {
-        console.error(error);
-        res.status(500).send("Error fetching data from the database.");
-      }
-    });
+    
 
     // app.get("quiz_all/:testCreationTableId", async (req, res) => {
     //   const testCreationTableId = req.params.testCreationTableId;
@@ -3134,204 +3117,6 @@ res.json(rows);
   
    
 
-      // Fetch document data based on subjectId, testCreationTableId, and sectionId
-      // const documentData = await getDocumentBySubjectAndTestCreationIdSectionId(
-      //   subjectId,
-      //   testCreationTableId,
-      //   sectionId
-      // );
-   
-      // if (!documentData) {
-      //   return res.status(404).send("Document not found");
-      // }
-   
-      // const document_Id = documentData.document_Id;
-   
-      // Fetch question data based on subjectId, document_Id, and sectionId
-      // const questions = await getQuestionsBySubjectAndDocumentId(
-      //   // subjectId,
-      //   // document_Id
-      //   question_id
-      // );
-   
-      // Fetch option data based on questions and document_Id
-      // const options = await getOptionsByQuestionsAndDocumentId(
-      //   questions
-      //   // document_Id
-      // );
-   
-      // // Fetch solution data based on questions and document_Id
-      // const solutions = await getSolutionsByQuestionsAndDocumentId(
-      //   questions
-      //   // document_Id
-      // );
-   
-  //    npn
-   
-  // async function getDocumentBySubjectAndTestCreationIdSectionId(subjectId, testCreationTableId, sectionId) {
-  //   try {
-  //     const query = `
-  //       SELECT document_Id, testCreationTableId, documen_name
-  //       FROM ots_document
-  //       WHERE subjectId = ? AND testCreationTableId = ? AND sectionId = ?
-  //     `;
-  //     const [result] = await db.query(query, [subjectId, testCreationTableId, sectionId]);
-  //     return result[0];
-  //   } catch (err) {
-  //     console.error(`Error fetching document details: ${err}`);
-  //     throw err;
-  //   }
-  // }
-   
-  async function getQuestionsBySubjectAndDocumentId(question_id) {
-    try {
-      const query = `
-      SELECT q.question_id,q.question_img ,s.sort_id,s.sortid_text FROM sortid s INNER JOIN questions AS q ON s.question_id=q.question_id WHERE q.question_id=?; 
-      `;
-      const [results] = await db.query(query, [question_id]);
-      const questionsWithBase64 = results.map((question) => ({
-        question_id: question.question_id,
-        question_img: question.question_img.toString("base64"),
-      }));
-      return questionsWithBase64;
-    } catch (err) {
-      console.error(`Error fetching questions: ${err}`);
-      throw err;
-    }
-  }
-   
-  async function getOptionsByQuestionsAndDocumentId(questions) {
-    try {
-      const questionIds = questions.map((question) => question.question_id);
-      const query = `
-        SELECT question_id, option_img
-        FROM options
-        WHERE question_id IN (?)
-      `;
-      const [results] = await db.query(query, [questionIds]);
-   
-      const optionsWithBase64 = results.map((option) => ({
-        question_id: option.question_id,
-        option_img: option.option_img.toString("base64"),
-      }));
-   
-      return optionsWithBase64;
-    } catch (err) {
-      console.error(`Error fetching options: ${err.message}`);
-      throw err;
-    }
-  }
-   
-  async function getSolutionsByQuestionsAndDocumentId(questions) {
-    try {
-      const questionIds = questions.map((question) => question.question_id);
-      const query = `
-        SELECT question_id, solution_img
-        FROM solution
-        WHERE question_id IN (?)
-      `;
-      const [results] = await db.query(query, [questionIds]);
-   
-      // Convert BLOB data to base64 for sending in the response
-      const solutionsWithBase64 = results.map((solution) => ({
-        question_id: solution.question_id,
-        solution_img: solution.solution_img.toString("base64"),
-      }));
-   
-      return solutionsWithBase64;
-    } catch (err) {
-      console.error(`Error fetching solutions: ${err}`);
-      throw err;
-    }
-  }
-   
-  async function getAnswersByQuestionsAndDocumentId(questions) {
-    try {
-      const questionIds = questions.map((question) => question.question_id);
-      const query = `
-        SELECT answer_id, question_id, answer_text
-        FROM answer
-        WHERE question_id IN (?)
-      `;
-      const [results] = await db.query(query, [questionIds]);
-      const answers = results.map((answer) => ({
-        answer_id: answer.answer_id,
-        question_id: answer.question_id,
-        answer_text: answer.answer_text,
-      }));
-   
-      return answers;
-    } catch (err) {
-      console.error(`Error fetching answers: ${err.message}`);
-      throw err;
-    }
-  }
-   
-  async function getMarksByQuestionsAndDocumentId(questions) {
-    try {
-      const questionIds = questions.map((question) => question.question_id);
-      const query = `
-        SELECT markesId, marks_text, question_id
-        FROM marks
-        WHERE question_id IN (?)
-      `;
-      const [results] = await db.query(query, [questionIds]);
-   
-      const marks = results.map((mark) => ({
-        markesId: mark.markesId,
-        marks_text: mark.marks_text,
-        question_id: mark.question_id,
-      }));
-   
-      return marks;
-    } catch (err) {
-      console.error(`Error fetching marks: ${err.message}`);
-      throw err;
-    }
-  }
-   
-  async function getQTypesByQuestionsAndDocumentId(questions) {
-    try {
-      const questionIds = questions.map((question) => question.question_id);
-      const query = `
-        SELECT qtypeId, qtype_text, question_id
-        FROM qtype
-        WHERE question_id IN (?)
-      `;
-      const [results] = await db.query(query, [questionIds]);
-   
-      const qtypes = results.map((qtype) => ({
-        qtypeId: qtype.qtypeId,
-        qtype_text: qtype.qtype_text,
-        question_id: qtype.question_id,
-      }));
-   
-      return qtypes;
-    } catch (err) {
-      console.error(`Error fetching qtypes: ${err.message}`);
-      throw err;
-    }
-  }
-   
-  function combineImage(questions, options, solutions) {
-    const combinedImages = [];
-   
-    for (let i = 0; i < questions.length; i++) {
-      const questionImage = questions[i].question_img;
-      const optionImages = options
-        .filter((opt) => opt.question_id === questions[i].question_id)
-        .map((opt) => opt.option_img);
-      const solutionImage = solutions.find(
-        (sol) => sol.question_id === questions[i].question_id
-      )?.solution_img;
-      combinedImages.push({
-        questionImage,
-        optionImages,
-        solutionImage,
-      });
-    }
-    return combinedImages;
-  }
 
 //   app.put("/updateQuestion/:questionId", upload.array("images"), async (req, res) => {
 //     const questionId = req.params.questionId;
@@ -3430,119 +3215,145 @@ app.put("/updateQuestion/:questionId", upload.array("images"), async (req, res) 
   }
 });
 
+app.get('/quizRAU/:sort_id' ,async(req,res) =>{
+  const {sort_id} = req.params;
+  try{
+const [rows] =await db.query( `SELECT
+q.question_id, q.questionImgName,
+o.option_id, o.optionImgName,
+s.solution_id, s.solutionImgName,
+a.answer_id, a.answer_text,
+qt.qtypeId, qt.qtype_text,
+m.markesId, m.marks_text,
+si.sort_id, si.question_id
+FROM
+questions q
+JOIN options o ON q.question_id = o.question_id
+JOIN solution s ON q.question_id = s.question_id
+JOIN answer a ON q.question_id = a.question_id
+JOIN qtype qt ON q.question_id = qt.question_id
+JOIN marks m ON q.question_id = m.question_id
+JOIN sortid si ON q.question_id = si.question_id WHERE si.sort_id=?  `,[ sort_id] );
+res.json(rows);
+  }catch (error) {
+    console.error('Error fetching sections data:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+})
 
- app.get("/quiz_all/:sort_id", async (req, res) => {
-  const sort_id = req.params.sort_id;
-  console.log('Received request for sort_id:', sort_id);
-  const sql = `
-    SELECT
-      q.question_id, q.question_img,
-      o.option_id, o.option_img,
-      s.solution_id, s.solution_img,
-      a.answer_id, a.answer_text,
-      qt.qtypeId, qt.qtype_text,
-      m.markesId, m.marks_text,
-      si.sort_id, si.question_id
-    FROM
-      questions q
-      JOIN options o ON q.question_id = o.question_id
-      JOIN solution s ON q.question_id = s.question_id
-      JOIN answer a ON q.question_id = a.question_id
-      JOIN qtype qt ON q.question_id = qt.question_id
-      JOIN marks m ON q.question_id = m.question_id
-      JOIN sortid si ON q.question_id = si.question_id WHERE si.sort_id=? `;
+//  app.get("/quiz/:sort_id", async (req, res) => {
+//   // console.log('Received request with parameters:', req.params);
+//   const sort_id = req.params.sort_id;
+//   // console.log('Extracted question_id:', sort_id);
   
-  try {
-    const results = await queryDatabase(sql, [sort_id]);
-    console.log('Query results:', results);
+//   const sql = `
+//     SELECT
+//       q.question_id, q.questionImgName,
+//       o.option_id, o.optionImgName,
+//       s.solution_id, s.solutionImgName,
+//       a.answer_id, a.answer_text,
+//       qt.qtypeId, qt.qtype_text,
+//       m.markesId, m.marks_text,
+//       si.sort_id, si.question_id
+//     FROM
+//       questions q
+//       JOIN options o ON q.question_id = o.question_id
+//       JOIN solution s ON q.question_id = s.question_id
+//       JOIN answer a ON q.question_id = a.question_id
+//       JOIN qtype qt ON q.question_id = qt.question_id
+//       JOIN marks m ON q.question_id = m.question_id
+//       JOIN sortid si ON q.question_id = si.question_id WHERE si.sort_id=? `;
+  
+//   try {
+//     const results = await queryDatabase(sql, [sort_id]);
+//     // console.log('Query results:', results);
  
-    const response = {};
+//     // const response = {};
 
-    results.forEach((row) => {
-      const {
-        sort_id,
-        question_id,
-        question_img,
-        option_id,
-        option_img,
-        solution_id,
-        solution_img,
-        answer_id,
-        answer_text,
-        qtypeId,
-        qtype_text,
-        markesId,
-        marks_text,
-      } = row;
+//     // results.forEach((row) => {
+//     //   const {
+//     //     sort_id,
+//     //     question_id,
+//     //     questionImgName,
+//     //     option_id,
+//     //     optionImgName,
+//     //     solution_id,
+//     //     solutionImgName,
+//     //     answer_id,
+//     //     answer_text,
+//     //     qtypeId,
+//     //     qtype_text,
+//     //     markesId,
+//     //     marks_text,
+//     //   } = row;
 
-      if (!response[sort_id]) {
-        response[sort_id] = {
-          sort_id,
-          questions: [],
-        };
-      }
+//     //   if (!response[sort_id]) {
+//     //     response[sort_id] = {
+//     //       sort_id,
+//     //       questions: [],
+//     //     };
+//     //   }
 
-      const question = response[sort_id].questions.find(q => q.question_id === question_id);
+//     //   const question = response[sort_id].questions.find(q => q.question_id === question_id);
 
-      if (!question) {
-        response[sort_id].questions.push({
-          question_id,
-          userAnswers: "",
-          isvisited: 0,
-          question_img: question_img.toString('base64'),
-          option_img: [],
-          solution_img: [],
-          answer: {
-            answer_id,
-            answer_text,
-          },
-          qtype: {
-            qtypeId,
-            qtype_text,
-          },
-          marks: {
-            markesId,
-            marks_text,
-          },
-        });
-      }
+//     //   if (!question) {
+//     //     response[sort_id].questions.push({
+//     //       question_id,
+//     //       userAnswers: "",
+//     //       isvisited: 0,
+//     //       questionImgName: questionImgName,
+//     //       optionImgName: [],
+//     //       solutionImgName: [],
+//     //       answer: {
+//     //         answer_id,
+//     //         answer_text,
+//     //       },
+//     //       qtype: {
+//     //         qtypeId,
+//     //         qtype_text,
+//     //       },
+//     //       marks: {
+//     //         markesId,
+//     //         marks_text,
+//     //       },
+//     //     });
+//     //   }
 
-      const option = {
-        option_id,
-        option_img: option_img.toString('base64'),
-      };
+//     //   const option = {
+//     //     option_id,
+//     //     optionImgName: optionImgName,
+//     //   };
 
-      response[sort_id].questions.find(q => q.question_id === question_id).option_img.push(option);
+//     //   response[sort_id].questions.find(q => q.question_id === question_id).optionImgName.push(option);
 
-      const solution = {
-        solution_id,
-        solution_img: solution_img.toString('base64'),
-      };
+//     //   const solution = {
+//     //     solution_id,
+//     //     solutionImgName:solutionImgName,
+//     //   };
+//     //   response[sort_id].questions.find(q => q.question_id === question_id).solutionImgName.push(solution);
+//     // });
 
-      response[sort_id].questions.find(q => q.question_id === question_id).solution_img.push(solution);
-    });
-
-    res.json(response);
-  } catch (err) {
-    console.error('Error querying the database: ' + err.message);
-    res.status(500).json({ error: 'Error fetching testCreationTableId' });
-  }
-});
+//     res.json(results);
+//   } catch (err) {
+//     // console.error('Error querying the database: ' + err.message);
+//     res.status(500).json({ error: 'Error fetching testCreationTableId' });
+//   }
+// });
 
   
-  function queryDatabase(sql, params) {
-    console.log('Executing SQL query:', sql, 'with params:', params);
-    return new Promise((resolve, reject) => {
-      db.query(sql, params, (err, results) => {
-        if (err) {
-          console.error('Database error:', err);
-          reject(err);
-        } else {
-          resolve(results);
-        }
-      });
-    });
-  }
+//   function queryDatabase(sql, params) {
+//     console.log('Executing SQL query:', sql, 'with params:', params);
+//     return new Promise((resolve, reject) => {
+//       db.query(sql, params, (err, results) => {
+//         if (err) {
+//           console.error('Database error:', err);
+//           reject(err);
+//         } else {
+//           resolve(results);
+//         }
+//       });
+//     });
+//   }
   
 
 
@@ -3698,155 +3509,603 @@ app.put("/updateQuestion/:questionId", upload.array("images"), async (req, res) 
     });
 
 
-
-    app.post('/upload', upload.single('document'), async (req, res) => {
-      const docxFilePath = `uploads/${req.file.filename}`;
-      const outputDir = `uploads/${req.file.originalname}_images`;
-      const docName = `${req.file.originalname}`;
-    
-      try {
-        await fs.mkdir(outputDir, { recursive: true });
-        const result = await mammoth.convertToHtml({ path: docxFilePath });
-        const htmlContent = result.value;
-        const $ = cheerio.load(htmlContent);
-        const textResult = await mammoth.extractRawText({ path: docxFilePath });
-        const textContent = textResult.value;
-        const textSections = textContent.split('\n\n');
-    
-        const [documentResult] = await db.query("INSERT INTO ots_document SET ?", {
-          documen_name: docName,
+//working Document upload in uploads folder 
+app.post('/upload', upload.single('document'), async (req, res) => {
+  const docxFilePath = `uploads/${req.file.filename}`;
+  const outputDir = `uploads/${req.file.originalname}`;
+  const docName = `${req.file.originalname}`;
+  try {
+    await fs.mkdir(outputDir, { recursive: true });
+    const result = await mammoth.convertToHtml({ path: docxFilePath });
+    const htmlContent = result.value;
+    const $ = cheerio.load(htmlContent);
+    const textResult = await mammoth.extractRawText({ path: docxFilePath });
+    const textContent = textResult.value;
+    const textSections = textContent.split('\n\n');
+ 
+    const [documentResult] = await db.query("INSERT INTO ots_document SET ?", {
+      documen_name: docName,
+            testCreationTableId: req.body.testCreationTableId,
+            subjectId: req.body.subjectId,
+            sectionId:req.body.sectionId,
+          });
+          const document_Id = documentResult.insertId;
+ 
+ 
+    // Get all images in the order they appear in the HTML
+    const images = [];
+    $('img').each(function (i, element) {
+      const base64Data = $(this).attr('src').replace(/^data:image\/\w+;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      images.push(imageBuffer);
+    });
+ 
+    let Question_id;
+    let question_id=[];
+ 
+    for (let i = 0; i < images.length; i++) {
+      const j = i % 6; // Calculate the index within the 6-image cycle
+ 
+      // Save the snapshot image as a PNG file
+      const imageName = `snapshot_${Math.floor(i / 6) + 1}_${j}.png`;
+      const imagePath = `${outputDir}/${imageName}`;
+      await fs.writeFile(imagePath, images[i]);
+ 
+      if (j === 0) {
+        // For the first image, save it as a question
+        const questionRecord = {
+          questionImgName: imageName,
           testCreationTableId: req.body.testCreationTableId,
           subjectId: req.body.subjectId,
-        });
-    
-        const document_Id = documentResult.insertId;
-        let Question_id;
-        let question_id = [];
-        let que_id;
-        let questionCounter = 0; // Counter to keep track of questions processed
-        let optionCounter = 0;
-        const images = [];
-        $('img').each(function (i, element) {
-          const base64Data = $(this).attr('src').replace(/^data:image\/\w+;base64,/, '');
-          const imageBuffer = Buffer.from(base64Data, 'base64');
-          images.push(imageBuffer);
-        });
-        
-
-      
-for (let i = 0; i < textSections.length; i++) {
-  if (textSections[i].includes('[Q]')) {
-    const index = questionCounter % images.length;
-    const imageName = `snapshot_${Math.floor(questionCounter / 6) + 1}_${questionCounter % 6}.png`;
-    const imagePath = `${outputDir}/${imageName}`;
-    await fs.writeFile(imagePath, images[index]);
-
-    // Save it as a question
-    const questionRecord = {
-      questionImgName: imageName,
-      testCreationTableId: req.body.testCreationTableId,
-      subjectId: req.body.subjectId,
-      document_Id: document_Id,
-      sectionId: req.body.sectionId,
-    };
-
-    console.log(`Processing Question Image: ${imageName}`);
-    Question_id = await insertRecord('questions', questionRecord);
-    question_id.push(Question_id);
-    questionCounter++;
-  } else if (textSections[i].startsWith('([a-d])')) {
-    // Save it as an option
-    const optionIndex = (questionCounter * 4 + optionCounter) % images.length; // Increment by 4 for each option (a, b, c, d)
-    const optionRecord = {
-      optionImgName: getImageName(optionIndex),
-      question_id: Question_id,
-    };
-
-    console.log(`Processing Option Image: ${getImageName(optionIndex)}`);
-    await insertRecord('options', optionRecord);
-    optionCounter++;
-  } else if (textSections[i].includes('[soln]')) {
-    // Save it as a solution
-    const solutionIndex = (questionCounter - 1) % images.length;
-    const solutionRecord = {
-      solutionImgName: `solution_${Math.floor((questionCounter - 1) / 6) + 1}.png`,
-      question_id: Question_id,
-    };
-
-    console.log(`Processing Solution Image: ${solutionRecord.solutionImgName}`);
-    await insertRecord('solution', solutionRecord);
+          document_Id: document_Id,
+          sectionId: req.body.sectionId
+        };
+        console.log(j);
+        Question_id = await insertRecord('questions', questionRecord);
+        question_id.push(Question_id)
+      } else {
+        // For subsequent images, save as options or solution
+        if (j < 5) {
+          const optionRecord = {
+            optionImgName: imageName,
+            question_id: Question_id
+          };
+          console.log(j);
+          await insertRecord('options', optionRecord);
+        } else {
+          const solutionRecord = {
+            solutionImgName: imageName,
+            question_id: Question_id
+          };
+          console.log(j);
+          await insertRecord('solution', solutionRecord);
+        }
+      }
+    }
+    let j=0;
+    let que_id;
+    for (let i = 0; i < textSections.length; i++) {
+      if (textSections[i].startsWith('[qtype]')) {
+        que_id=question_id[j];
+        j++;
+        // Save in the qtype table
+        const qtypeRecord = {
+          qtype_text: textSections[i].replace('[qtype]', ''),
+          question_id: que_id
+        };
+        await insertRecord('qtype', qtypeRecord);
+      } else if (textSections[i].startsWith('[ans]')) {
+        // Save in the answer table
+        const answerRecord = {
+          answer_text: textSections[i].replace('[ans]', ''),
+          question_id: que_id
+        };
+        await insertRecord('answer', answerRecord);
+      } else if (textSections[i].startsWith('[Marks]')) {
+        // Save in the marks table
+        const marksRecord = {
+          marks_text: textSections[i].replace('[Marks]', ''),
+          question_id: que_id
+        };
+        await insertRecord('marks', marksRecord);
+      }else if (textSections[i].startsWith('[sortid]')) {
+        const sortidRecord = {
+          sortid_text: textSections[i].replace('[sortid]', ''),
+          question_id: que_id
+        };
+        await insertRecord('sortid', sortidRecord);
+      }
+    }
+ 
+    res.send('Text content and images extracted and saved to the database with the selected topic ID successfully.');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error extracting content and saving it to the database.');
+  }
+});
+async function insertRecord(table, record) {
+  try {
+    const [result] = await db.query(`INSERT INTO ${table} SET ?`, record);
+    console.log(`${table} id: ${result.insertId}`);
+    return result.insertId;
+  } catch (err) {
+    console.error(`Error inserting data into ${table}: ${err}`);
+    throw err;
   }
 }
-        
-        // Check if there are enough question_id elements
-        if (question_id.length < textSections.filter(section => section.startsWith('[qtype]')).length) {
-          console.error('Not enough question_id elements for qtype insertion.');
-        } else {
-          for (let i = 0; i < textSections.length; i++) {
-            if (textSections[i].startsWith('[qtype]')) {
-              que_id = question_id.shift();
-              // Save in the qtype table
-              const qtypeRecord = {
-                qtype_text: textSections[i].replace('[qtype]', ''),
-                question_id: que_id,
-              };
-              await insertRecord('qtype', qtypeRecord);
-            } else if (textSections[i].startsWith('[ans]')) {
-              // Save in the answer table
-              const answerRecord = {
-                answer_text: textSections[i].replace('[ans]', ''),
-                question_id: que_id,
-              };
-              await insertRecord('answer', answerRecord);
-            } else if (textSections[i].startsWith('[Marks]')) {
-              // Save in the marks table
-              const marksRecord = {
-                marks_text: textSections[i].replace('[Marks]', ''),
-                question_id: que_id,
-              };
-              await insertRecord('marks', marksRecord);
-            }
-          }
-        }
-        res.send('Text content and images extracted and saved to the database with the selected topic ID successfully.');
-      } catch (error) {
-        console.error(error);
-        res.status(500).send('Error extracting content and saving it to the database.');
+ 
+const imagesDirectory = path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(imagesDirectory));
+ 
+app.use(express.json());
+app.use('/images', express.static(imagesDirectory));
+ 
+app.get('/image-list', async (req, res) => {
+  try {
+    const files = await fs.readdir(imagesDirectory);
+    console.log('Files in uploads directory:', files);
+    const imageNames = files.filter(file => file.endsWith('.png'));
+    res.json(imageNames);
+  } catch (error) {
+    console.error('Error fetching image list:', error);
+    res.status(500).send('Error fetching image list.');
+  }
+});
+// end
+
+//feaching imagesfrom upload folder
+app.get(
+  "/getSubjectData/:testCreationTableId/:subjectId/:sectionId",
+  async (req, res) => {
+    try {
+      const subjectId = req.params.subjectId;
+      const testCreationTableId = req.params.testCreationTableId;
+      const sectionId = req.params.sectionId;
+ 
+      // Fetch document data based on subjectId, testCreationTableId, and sectionId
+      const documentData = await dbHelper.getDocumentBySubjectAndTestCreationIdSectionId(
+        subjectId,
+        testCreationTableId,
+        sectionId
+      );
+ 
+      if (!documentData) {
+        return res.status(404).send("Document not found");
       }
-    });
-    
-    function getImageName(index) {
-      return `option_${String.fromCharCode(97 + index % 6)}_${Math.floor(index / 6) + 1}.png`;
+ 
+      const document_Id = documentData.document_Id;
+ 
+      // Fetch question data based on subjectId, document_Id, and sectionId
+      const questions = await dbHelper.getQuestionsBySubjectAndDocumentId(
+        subjectId,
+        document_Id,
+        sectionId
+      );
+ 
+      // Fetch option data based on questions and document_Id
+      const options = await dbHelper.getOptionsByQuestionsAndDocumentId(
+        questions,
+        document_Id
+      );
+ 
+      // Fetch solution data based on questions and document_Id
+      const solutions = await dbHelper.getSolutionsByQuestionsAndDocumentId(
+        questions,
+        document_Id
+      );
+ 
+      // Fetch answers data based on questions and document_Id
+      const answers = await dbHelper.getAnswersByQuestionsAndDocumentId(
+        questions,
+        document_Id
+      );
+ 
+      // Fetch marks data based on questions and document_Id
+      const marks = await dbHelper.getMarksByQuestionsAndDocumentId(
+        questions,
+        document_Id
+      );
+ 
+      // Fetch qtypes data based on questions and document_Id
+      const qtypes = await dbHelper.getQTypesByQuestionsAndDocumentId(
+        questions,
+        document_Id
+      );
+ 
+      // Combine images
+      const combinedImages = dbHelper.combineImage(
+        questions,
+        options,
+        solutions
+      );
+ 
+      // Respond with the fetched data
+      res.json({
+        document: documentData,
+        questions,
+        options,
+        solutions,
+        answers,
+        marks,
+        qtypes,
+        combinedImages,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send("Error fetching data from the database.");
     }
-    
-    async function insertRecord(table, record) {
-      try {
-        const [result] = await db.query(`INSERT INTO ${table} SET ?`, record);
-        console.log(`${table} id: ${result.insertId}`);
-        return result.insertId;
-      } catch (err) {
-        console.error(`Error inserting data into ${table}: ${err}`);
-        throw err;
-      }
+  }
+);
+class DatabaseHelper {
+  constructor(db) {
+    this.db = db;
+  }
+ 
+  async getDocumentBySubjectAndTestCreationIdSectionId(
+    subjectId,
+    testCreationTableId,
+    sectionId
+  ) {
+    try {
+      const query = `
+      SELECT document_Id, testCreationTableId, documen_name
+      FROM ots_document
+      WHERE subjectId = ? AND testCreationTableId = ? AND sectionId = ?
+    `;
+      const [result] = await this.db.query(query, [
+        subjectId,
+        testCreationTableId,
+        sectionId,
+      ]);
+      return result[0];
+    } catch (err) {
+      console.error(`Error fetching document details: ${err}`);
+      throw err;
     }
-    
-    const imagesDirectory = path.join(__dirname, 'uploads');
-    app.use('/uploads', express.static(imagesDirectory));
-    
-    app.use(express.json());
-    app.use('/images', express.static(imagesDirectory));
-    
-    app.get('/image-list', async (req, res) => {
-      try {
-        const files = await fs.readdir(imagesDirectory);
-        console.log('Files in uploads directory:', files);
-        const imageNames = files.filter(file => file.endsWith('.png'));
-        res.json(imageNames);
-      } catch (error) {
-        console.error('Error fetching image list:', error);
-        res.status(500).send('Error fetching image list.');
-      }
-    });
+  }
+ 
+  // Reusable function to get questions data based on subjectId and document_Id
+  async getQuestionsBySubjectAndDocumentId(subjectId, document_Id) {
+    try {
+      const query = `
+      SELECT question_id, questionImgName
+      FROM questions
+      WHERE subjectId = ? AND document_Id = ?  
+    `;
+      const [results] = await this.db.query(query, [subjectId, document_Id]);
+      const questionsWithBase64 = results.map((question) => ({
+        question_id: question.question_id,
+        questionImgName: question.questionImgName,
+      }));
+      return questionsWithBase64;
+    } catch (err) {
+      console.error(`Error fetching questions: ${err}`);
+      throw err;
+    }
+  }
+ 
+  // Reusable function to get options data based on questions and document_Id
+  async getOptionsByQuestionsAndDocumentId(questions, document_Id) {
+    try {
+      const questionIds = questions.map((question) => question.question_id);
+      const query = `
+      SELECT question_id, optionImgName
+      FROM options
+      WHERE question_id IN (?)
+    `;
+      const [results] = await this.db.query(query, [questionIds, document_Id]);
+ 
+      const optionsWithBase64 = results.map((option) => ({
+        question_id: option.question_id,
+        optionImgName: option.optionImgName,
+      }));
+ 
+      return optionsWithBase64;
+    } catch (err) {
+      console.error(`Error fetching options: ${err.message}`);
+      throw err;
+    }
+  }
+ 
+  // Reusable function to get solutions data based on questions and document_Id
+  async getSolutionsByQuestionsAndDocumentId(questions, document_Id) {
+    try {
+      const questionIds = questions.map((question) => question.question_id);
+      const query = `
+      SELECT question_id, solutionImgName
+      FROM solution
+      WHERE question_id IN (?)
+    `;
+      const [results] = await db.query(query, [questionIds, document_Id]);
+ 
+      // Convert BLOB data to base64 for sending in the response
+      const solutionsWithBase64 = results.map((solution) => ({
+        question_id: solution.question_id,
+        solutionImgName: solution.solutionImgName,
+      }));
+ 
+      return solutionsWithBase64;
+    } catch (err) {
+      console.error(`Error fetching solutions: ${err}`);
+      throw err;
+    }
+  }
+ 
+  async getAnswersByQuestionsAndDocumentId(questions, document_Id) {
+    try {
+      const questionIds = questions.map((question) => question.question_id);
+      const query = `
+      SELECT answer_id, question_id, answer_text
+      FROM answer
+      WHERE question_id IN (?)
+    `;
+      const [results] = await db.query(query, [questionIds, document_Id]);
+      const answers = results.map((answer) => ({
+        answer_id: answer.answer_id,
+        question_id: answer.question_id,
+        answer_text: answer.answer_text,
+      }));
+ 
+      return answers;
+    } catch (err) {
+      console.error(`Error fetching answers: ${err.message}`);
+      throw err;
+    }
+  }
+  async getMarksByQuestionsAndDocumentId(questions, document_Id) {
+    try {
+      const questionIds = questions.map((question) => question.question_id);
+      const query = `
+      SELECT  markesId, marks_text, question_id
+      FROM marks
+      WHERE question_id IN (?)
+    `;
+      const [results] = await db.query(query, [questionIds, document_Id]);
+ 
+      const marks = results.map((mark) => ({
+        markesId: mark.markesId,
+        marks_text: mark.marks_text,
+        question_id: mark.question_id,
+      }));
+ 
+      return marks;
+    } catch (err) {
+      console.error(`Error fetching marks: ${err.message}`);
+      throw err;
+    }
+  }
+ 
+  async getQTypesByQuestionsAndDocumentId(questions, document_Id) {
+    try {
+      const questionIds = questions.map((question) => question.question_id);
+      const query = `
+      SELECT qtypeId, qtype_text, question_id
+      FROM qtype
+      WHERE question_id IN (?)
+    `;
+      const [results] = await db.query(query, [questionIds, document_Id]);
+ 
+      const qtypes = results.map((qtype) => ({
+        qtypeId: qtype.qtypeId,
+        qtype_text: qtype.qtype_text,
+        question_id: qtype.question_id,
+      }));
+ 
+      return qtypes;
+    } catch (err) {
+      console.error(`Error fetching qtypes: ${err.message}`);
+      throw err;
+    }
+  }
+ 
+  combineImage(questions, options, solutions) {
+    const combinedImages = [];
+ 
+    for (let i = 0; i < questions.length; i++) {
+      const questionImage = questions[i].questionImgName;
+      const optionImages = options
+        .filter((opt) => opt.question_id === questions[i].question_id)
+        .map((opt) => opt.optionImgName);
+      const solutionImage = solutions.find(
+        (sol) => sol.question_id === questions[i].question_id
+      )?.solutionImgName;
+      combinedImages.push({
+        questionImage,
+        optionImages,
+        solutionImage,
+      });
+    }
+    return combinedImages;
+  }
+}
+ 
+const dbHelper = new DatabaseHelper(db);
+ //end
+    // app.post('/upload', upload.single('document'), async (req, res) => {
+    //   const docxFilePath = `uploads/${req.file.filename}`;
+    //   const outputDir = `uploads/${req.file.originalname}`;
+    //   const docName = req.file.originalname;
+     
+    //   try {
+    //     await fs.mkdir(outputDir, { recursive: true });
+     
+    //     const result = await mammoth.convertToHtml({ path: docxFilePath });
+    //     const htmlContent = result.value;
+    //     const $ = cheerio.load(htmlContent);
+     
+    //     const textResult = await mammoth.extractRawText({ path: docxFilePath });
+    //     const textSections = textResult.value.split('\n\n');
+     
+    //     const [documentResult] = await db.query("INSERT INTO ots_document SET ?", {
+    //       documen_name: docName,
+    //       testCreationTableId: req.body.testCreationTableId,
+    //       subjectId: req.body.subjectId,
+    //     });
+    //     let document_Id = documentResult.insertId;
+     
+    //     const QUESTION_MARK = "[Q]";
+    //     const OPTION_MARKERS = ["(a)", "(b)", "(c)", "(d)"];
+    //     const SOLN_MARK = "[soln]";
+     
+    //     let Question_id;
+    //     let question_id = [];
+    //     const images = []; // Moved the images array to this level
+      
+    //     // Get all images in the order they appear in the HTML
+    //     $('img').each(function (i, element) {
+    //       const base64Data = $(this).attr('src').replace(/^data:image\/\w+;base64,/, '');
+    //       const imageBuffer = Buffer.from(base64Data, 'base64');
+    //       images.push(imageBuffer);
+    //     });
+     
+    //     const imagePromises = [];
+     
+    //     // Save the snapshot images as PNG files
+    //     images.forEach(async (image, i) => {
+    //       const imageName = `snapshot_${i + 1}.png`;
+    //       const imagePath = `${outputDir}/${imageName}`;
+    //       imagePromises.push(fs.writeFile(imagePath, image));
+    //     });
+     
+    //     // Wait for all image writing operations to complete
+    //     await Promise.all(imagePromises);
+     
+    //     // textSections.forEach(async (section, i) => {
+     
+    //       // images.forEach(async (image, i) => {
+    //       //   const imageName = `iamge_${Math.floor(i / 6) + 1}_$.png`;
+    //       //   const imagePath = `${outputDir}/${imageName}`;
+    //       //   imagePromises.push(fs.writeFile(imagePath, image));
+    //       // });
+
+    //       // Check if the section is a question, option, or solution
+    //       textSections.forEach(async (section, i) => {
+    //         // Check if the section is a question, option, or solution
+    //         if (section.startsWith(QUESTION_MARK)) {
+    //           const questionRecord = {
+    //             questionImgName: `snapshot_${i + 1}.png`,
+    //             testCreationTableId: req.body.testCreationTableId,
+    //             subjectId: req.body.subjectId,
+    //             document_Id: document_Id,
+    //             sectionId: req.body.sectionId,
+    //           };
+    //           Question_id = await insertRecord('questions', questionRecord);
+    //           question_id.push(Question_id);
+    //         } else if (OPTION_MARKERS.some(marker => section.startsWith(marker))) {
+    //           const optionRecord = {
+    //             optionImgName: `option_${i + 1}.png`,
+    //             question_id: Question_id,
+    //           };
+    //           await insertRecord('options', optionRecord);
+    //         } else if (section.startsWith(SOLN_MARK)) {
+    //           if (!Question_id) {
+    //             console.error('Error: Question_id is null when inserting into solution.');
+    //             return;  // You may want to handle this case appropriately
+    //           }
+              
+    //           const solutionRecord = {
+    //             solutionImgName: `solution_${i + 1}.png`,
+    //             question_id: Question_id,
+    //           };
+    //           await insertRecord('solution', solutionRecord);
+    //         }
+    //       });
+          
+    //       // Ensure that all asynchronous operations have completed before proceeding
+    //       await Promise.all(imagePromises);
+          
+    //       // ...
+          
+    //       // Check if there are enough question_id elements
+    //       if (question_id.length < textSections.filter(section => section.startsWith('[qtype]')).length) {
+    //         console.error('Not enough question_id elements for qtype insertion.');
+    //       } else {
+    //         for (let i = 0; i < textSections.length; i++) {
+    //           if (textSections[i].startsWith('[qtype]')) {
+    //             if (question_id.length > 0) {
+    //               que_id = question_id.shift();
+    //               // Save in the qtype table
+    //               const qtypeRecord = {
+    //                 qtype_text: textSections[i].replace('[qtype]', ''),
+    //                 question_id: que_id,
+    //               };
+    //               await insertRecord('qtype', qtypeRecord);
+    //             } else {
+    //               console.error('Error: Not enough question_id elements for qtype insertion.');
+    //             }
+    //           } else if (textSections[i].startsWith('[ans]')) {
+    //             // Save in the answer table
+    //             if (que_id) {
+    //               const answerRecord = {
+    //                 answer_text: textSections[i].replace('[ans]', ''),
+    //                 question_id: que_id,
+    //               };
+    //               await insertRecord('answer', answerRecord);
+    //             } else {
+    //               console.error('Error: Question_id is null when inserting into answer.');
+    //             }
+    //           } else if (textSections[i].startsWith('[Marks]')) {
+    //             // Save in the marks table
+    //             if (que_id) {
+    //               const marksRecord = {
+    //                 marks_text: textSections[i].replace('[Marks]', ''),
+    //                 question_id: que_id,
+    //               };
+    //               await insertRecord('marks', marksRecord);
+    //             } else {
+    //               console.error('Error: Question_id is null when inserting into marks.');
+    //             }
+    //           }
+    //         }
+    //       }
+     
+    //     res.send('Text content and images extracted and saved to the database with the selected topic ID successfully.');
+    //   } catch (error) {
+    //     console.error(error);
+    //     res.status(500).send('Error extracting content and saving it to the database.');
+    //   }
+    // });
+     
+    // async function insertDocumentRecord(testCreationTableId, subjectId, docName) {
+    //   const [documentResult] = await db.query("INSERT INTO ots_document SET ?", {
+    //     documen_name: docName,
+    //     testCreationTableId: testCreationTableId,
+    //     subjectId: subjectId,
+    //   });
+    //   return documentResult.insertId;
+    // }
+     
+    // async function insertRecord(table, record) {
+    //   try {
+    //     const [result] = await db.query(`INSERT INTO ${table} SET ?`, record);
+    //     console.log(`${table} id: ${result.insertId}`);
+    //     return result.insertId;
+    //   } catch (err) {
+    //     console.error(`Error inserting data into ${table}: ${err}`);
+    //     throw err;
+    //   }
+    // }
+     
+     
+     
+    // const imagesDirectory = path.join(__dirname, 'uploads');
+    // app.use('/uploads', express.static(imagesDirectory));
+     
+    // app.use(express.json());
+    // app.use('/images', express.static(imagesDirectory));
+     
+    // app.get('/image-list', async (req, res) => {
+    //   try {
+    //     const files = await fs.readdir(imagesDirectory);
+    //     console.log('Files in uploads directory:', files);
+    //     const imageNames = files.filter(file => file.endsWith('.png'));
+    //     res.json(imageNames);
+    //   } catch (error) {
+    //     console.error('Error fetching image list:', error);
+    //     res.status(500).send('Error fetching image list.');
+    //   }
+    // });
+     
     
     
     // app.post('/upload', upload.single('document'), async (req, res) => {

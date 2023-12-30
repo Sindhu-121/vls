@@ -1,5 +1,5 @@
 import React, { useState, useEffect , useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 const ReplaceAndUpdate = () => {
   const isMounted = useRef(true);
@@ -9,7 +9,7 @@ const ReplaceAndUpdate = () => {
   const [subjects, setSubjects] = useState([]);
   const [sections, setSections] = useState([]);
   const [sortid,setSortid] = useState([]);
-
+  const {question_id}=useParams
   // const [data, setData] = useState([]);
 
   const [selectedExam, setSelectedExam] = useState("");
@@ -115,11 +115,12 @@ setSortid(data);
     const selectedSortid = event.target.value;
     setSelectedSortid(selectedSortid);
     try{
-      const response = await fetch(`http://localhost:3081/singleQuetionRAU/${selectedSortid}`);
+      // const response = await fetch(`http://localhost:3081/singleQuetionRAU/${selectedSortid}`);
+      const response = await fetch(`http://localhost:3081/quizRAU/${selectedSortid}`);
     const data = await response.json();
 
     if (isMounted.current) {
-      setData(data.questions); 
+      setData(data.questions || []);
     }
     setData(data);
 
@@ -216,7 +217,7 @@ setSortid(data);
             >
               <option value="">Select a Question Number</option>
               {sortid.map((sortid) => (
-                <option key={sortid.sort_id} value={sortid.question_id}>
+                <option key={sortid.sort_id} value={sortid.sort_id}>
                   {sortid.sortid_text}
                 </option>
               ))}
