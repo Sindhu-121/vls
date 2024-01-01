@@ -3586,7 +3586,7 @@ app.post('/upload', upload.single('document'), async (req, res) => {
     let que_id=0;let k=1;
     console.log(textSections);
     for (let i = 0; i < textSections.length; i++) {
-      if (textSections[i].startsWith('[qtype]')) {
+      if (textSections[i].includes('[qtype]')) {
         // que_id=question_id[j];
         // j++;
         // Save in the qtype table
@@ -3596,21 +3596,21 @@ app.post('/upload', upload.single('document'), async (req, res) => {
         };
         console.log()
         await insertRecord('qtype', qtypeRecord);
-      } else if (textSections[i].startsWith('[ans]')) {
+      } else if (textSections[i].includes('[ans]')) {
         // Save in the answer table
         const answerRecord = {
           answer_text: textSections[i].replace('[ans]', ''),
           question_id: que_id
         };
         await insertRecord('answer', answerRecord);
-      } else if (textSections[i].startsWith('[Marks]')) {
+      } else if (textSections[i].includes('[Marks]')) {
         // Save in the marks table
         const marksRecord = {
           marks_text: textSections[i].replace('[Marks]', ''),
           question_id: que_id
         };
         await insertRecord('marks', marksRecord);
-      }else if (textSections[i].startsWith('[sortid]')) {
+      }else if (textSections[i].includes('[sortid]')) {
         const sortidRecord = {
           sortid_text: textSections[i].replace('[sortid]', ''),
           question_id: que_id
