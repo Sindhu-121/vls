@@ -3540,59 +3540,61 @@ app.post('/upload', upload.single('document'), async (req, res) => {
       images.push(imageBuffer);
     });
  
-    let Question_id;
-    let question_id=[];
+    // let Question_id;
+    // let question_id=[];
  
-    for (let i = 0; i < images.length; i++) {
-      const j = i % 6; // Calculate the index within the 6-image cycle
+    // for (let i = 0; i < images.length; i++) {
+    //   const j = i % 6; // Calculate the index within the 6-image cycle
  
-      // Save the snapshot image as a PNG file
-      const imageName = `snapshot_${Math.floor(i / 6) + 1}_${j}.png`;
-      const imagePath = `${outputDir}/${imageName}`;
-      await fs.writeFile(imagePath, images[i]);
+    //   // Save the snapshot image as a PNG file
+    //   const imageName = `snapshot_${Math.floor(i / 6) + 1}_${j}.png`;
+    //   const imagePath = `${outputDir}/${imageName}`;
+    //   await fs.writeFile(imagePath, images[i]);
  
-      if (j === 0) {
-        // For the first image, save it as a question
-        const questionRecord = {
-          questionImgName: imageName,
-          testCreationTableId: req.body.testCreationTableId,
-          subjectId: req.body.subjectId,
-          document_Id: document_Id,
-          sectionId: req.body.sectionId
-        };
-        console.log(j);
-        Question_id = await insertRecord('questions', questionRecord);
-        question_id.push(Question_id)
-      } else {
-        // For subsequent images, save as options or solution
-        if (j < 5) {
-          const optionRecord = {
-            optionImgName: imageName,
-            question_id: Question_id
-          };
-          console.log(j);
-          await insertRecord('options', optionRecord);
-        } else {
-          const solutionRecord = {
-            solutionImgName: imageName,
-            question_id: Question_id
-          };
-          console.log(j);
-          await insertRecord('solution', solutionRecord);
-        }
-      }
-    }
-    let j=0;
-    let que_id;
+    //   if (j === 0) {
+    //     // For the first image, save it as a question
+    //     const questionRecord = {
+    //       questionImgName: imageName,
+    //       testCreationTableId: req.body.testCreationTableId,
+    //       subjectId: req.body.subjectId,
+    //       document_Id: document_Id,
+    //       sectionId: req.body.sectionId
+    //     };
+    //     console.log(j);
+    //     Question_id = await insertRecord('questions', questionRecord);
+    //     question_id.push(Question_id)
+    //   } else {
+    //     // For subsequent images, save as options or solution
+    //     if (j < 5) {
+    //       const optionRecord = {
+    //         optionImgName: imageName,
+    //         question_id: Question_id
+    //       };
+    //       console.log(j);
+    //       await insertRecord('options', optionRecord);
+    //     } else {
+    //       const solutionRecord = {
+    //         solutionImgName: imageName,
+    //         question_id: Question_id
+    //       };
+    //       console.log(j);
+    //       await insertRecord('solution', solutionRecord);
+    //     }
+    //   }
+    // }
+    let j=0;let image_index=0;
+    let que_id=0;let k=1;
+    console.log(textSections);
     for (let i = 0; i < textSections.length; i++) {
       if (textSections[i].startsWith('[qtype]')) {
-        que_id=question_id[j];
-        j++;
+        // que_id=question_id[j];
+        // j++;
         // Save in the qtype table
         const qtypeRecord = {
           qtype_text: textSections[i].replace('[qtype]', ''),
           question_id: que_id
         };
+        console.log()
         await insertRecord('qtype', qtypeRecord);
       } else if (textSections[i].startsWith('[ans]')) {
         // Save in the answer table
@@ -3614,6 +3616,76 @@ app.post('/upload', upload.single('document'), async (req, res) => {
           question_id: que_id
         };
         await insertRecord('sortid', sortidRecord);
+      }
+      else if (textSections[i].includes('[Q]')) {
+        const imageName = `snapshot_${document_Id}_${req.body.subjectId}_question_${k}.png`;k++;
+        const imagePath = `${outputDir}/${imageName}`;
+        await fs.writeFile(imagePath, images[image_index]);image_index++;
+        const questionRecord = {
+          questionImgName: imageName,
+          testCreationTableId: req.body.testCreationTableId,
+          subjectId: req.body.subjectId,
+          document_Id: document_Id,
+          sectionId: req.body.sectionId
+        };
+        que_id = await insertRecord('questions', questionRecord);
+        // question_id.push(Question_id)
+
+      }
+      else if (textSections[i].includes('(a)')) {
+        const imageName = `snapshot_${document_Id}_${req.body.subjectId}_option_a_${k}.png`;
+        const imagePath = `${outputDir}/${imageName}`;
+        await fs.writeFile(imagePath, images[image_index]);image_index++;
+        const optionRecord = {
+          optionImgName: imageName,
+          option_index:'a',
+          question_id: que_id
+        };
+        await insertRecord('options', optionRecord);
+        
+      }else if (textSections[i].includes('(b)')) {
+        const imageName = `snapshot_${document_Id}_${req.body.subjectId}_option_b_${k}.png`;
+        const imagePath = `${outputDir}/${imageName}`;
+        await fs.writeFile(imagePath, images[image_index]);image_index++;
+        const optionRecord = {
+          optionImgName: imageName,
+          option_index:'b',
+          question_id: que_id
+        };
+        await insertRecord('options', optionRecord);
+        
+      }else if (textSections[i].includes('(c)')) {
+        const imageName = `snapshot_${document_Id}_${req.body.subjectId}_option_c_${k}.png`;
+        const imagePath = `${outputDir}/${imageName}`;
+        await fs.writeFile(imagePath, images[image_index]);image_index++;
+        const optionRecord = {
+          optionImgName: imageName,
+          option_index:'c',
+          question_id: que_id
+        };
+        await insertRecord('options', optionRecord);
+        
+      }else if (textSections[i].includes('(d)')) {
+        const imageName = `snapshot_${document_Id}_${req.body.subjectId}_option_d_${k}.png`;
+        const imagePath = `${outputDir}/${imageName}`;
+        await fs.writeFile(imagePath, images[image_index]);image_index++;
+        const optionRecord = {
+          optionImgName: imageName,
+          option_index:'d',
+          question_id: que_id
+        };
+        await insertRecord('options', optionRecord);
+        
+      }else if (textSections[i].includes('[soln]')) {
+        const imageName = `snapshot_${document_Id}_${req.body.subjectId}_solution_${k}.png`;
+        const imagePath = `${outputDir}/${imageName}`;
+        await fs.writeFile(imagePath, images[image_index]);image_index++;
+        const solutionRecord = {
+          solutionImgName: imageName,
+          question_id: que_id
+        };
+        await insertRecord('solution', solutionRecord);
+        
       }
     }
  
