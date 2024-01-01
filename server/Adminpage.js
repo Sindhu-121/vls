@@ -3215,8 +3215,8 @@ app.put("/updateQuestion/:questionId", upload.array("images"), async (req, res) 
   }
 });
 
-app.get('/quizRAU/:sort_id' ,async(req,res) =>{
-  const {sort_id} = req.params;
+app.get('/quizRAU/:question_id' ,async(req,res) =>{
+  const {question_id} = req.params;
   try{
 const [rows] =await db.query( `SELECT
 q.question_id, q.questionImgName,
@@ -3228,12 +3228,14 @@ m.markesId, m.marks_text,
 si.sort_id, si.question_id
 FROM
 questions q
-JOIN options o ON q.question_id = o.question_id
-JOIN solution s ON q.question_id = s.question_id
-JOIN answer a ON q.question_id = a.question_id
-JOIN qtype qt ON q.question_id = qt.question_id
-JOIN marks m ON q.question_id = m.question_id
-JOIN sortid si ON q.question_id = si.question_id WHERE si.sort_id=?  `,[ sort_id] );
+LEFT OUTER JOIN options o ON q.question_id = o.question_id
+LEFT OUTER JOIN solution s ON q.question_id = s.question_id
+LEFT OUTER JOIN answer a ON q.question_id = a.question_id
+LEFT OUTER JOIN qtype qt ON q.question_id = qt.question_id
+LEFT OUTER JOIN marks m ON q.question_id = m.question_id
+LEFT OUTER JOIN sortid si ON q.question_id = si.question_id
+WHERE si.question_id = ?;
+`,[ question_id] );
 res.json(rows);
   }catch (error) {
     console.error('Error fetching sections data:', error);

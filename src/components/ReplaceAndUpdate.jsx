@@ -217,7 +217,7 @@ setSortid(data);
             >
               <option value="">Select a Question Number</option>
               {sortid.map((sortid) => (
-                <option key={sortid.sort_id} value={sortid.sort_id}>
+                <option key={sortid.question_id} value={sortid.sort_id}>
                   {sortid.sortid_text}
                 </option>
               ))}
