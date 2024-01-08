@@ -1,6 +1,6 @@
 import React, { useState, useEffect , useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
-
+import axios from "axios";
 const ReplaceAndUpdate = () => {
   const isMounted = useRef(true);
   const [exams, setExams] = useState([]);
@@ -19,8 +19,8 @@ const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
 
   const [selectedSortid, setSelectedSortid] = useState("");
-
-
+  const [questionData, setQuestionData] = useState({});
+ 
   useEffect(() => {
     return () => {
       // Component unmounted, set isMounted to false
@@ -110,31 +110,48 @@ setSortid(data);
       console.error('Error fetching sections data:', error);
     }
   };
-
   const handleSortidChange = async (event) => {
     const selectedSortid = event.target.value;
     setSelectedSortid(selectedSortid);
-    try{
-      // const response = await fetch(`http://localhost:3081/singleQuetionRAU/${selectedSortid}`);
+  
+    try {
       const response = await fetch(`http://localhost:3081/quizRAU/${selectedSortid}`);
-    const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
 
-    if (isMounted.current) {
-      setData(data.questions || []);
+      const data = await response.json();
+      setQuestionData(data);
+    } catch (error) {
+      console.error('Error fetching question data:', error);
     }
-    setData(data);
-
-    }catch (error) {
-          console.error('Error fetching sections data:', error);
-        }
-
   };
- 
-  
-
-  const [data, setData] = useState({ });
-  
-
+  const handlechange=async(type,main_key,file)=>{
+        try {
+          const formData = new FormData();
+          formData.append("file", file);
+    
+          const response = await axios.post(
+           ` http://localhost:3081/uploadFile/${type}/${main_key}`,
+            formData,
+            {
+              headers: {
+                "enctype": "multipart/form-data",
+              },
+            }
+          );
+    
+          if (response.status === 200) {
+            // File uploaded successfully, you can update the state or take any other actions
+            console.log("File uploaded successfully");
+          } else {
+            console.error("Error uploading file");
+          }
+        } catch (error) {
+          console.error("Error uploading file:", error.message);
+        }
+    
+      }
   return (
     <div className="otsMainPages">
       <h2>Replace and Update</h2>
@@ -217,120 +234,70 @@ setSortid(data);
             >
               <option value="">Select a Question Number</option>
               {sortid.map((sortid) => (
-                <option key={sortid.question_id} value={sortid.sort_id}>
+                <option key={sortid.question_id} value={sortid.question_id}>
                   {sortid.sortid_text}
                 </option>
               ))}
             </select>
           </div></div>
 <div>
-
-
 <div className="Document_-images_-container otsMainPages">
-    
-<div
-        className="q1s"
-        style={{
-          display: "flex",
-          gap: "4rem",
-          flexDirection: "column",
-          width: "81vw",
-          margin: "2rem",
-        }}
-      >
-       {data.questions &&
-  data.questions.map((question) => (
-    <div
-      className="outColor examSubjects_-contant"
-      style={{ background: "", padding: "2rem 2rem" }}
-      key={`question_${question.question_id}`}
-    >
-      <div key={`question_inner_${question.question_id}`}>
-        <div className="question" key={`question_inner_inner_${question.question_id}`}>
-          <h3 style={{ display: "flex", gap: "1rem" }}>
-            <p>Question </p> {question.question_id}
-          </h3>
+ <div className="q1s" style={{ display: "flex", gap: "4rem", flexDirection: "column", width: "81vw", margin: "2rem" }}>
 
+   {questionData.question && (
+        <div>
+          <h3>Question {questionData.question.question_id}</h3>
           <img
-            src={`data:image/png;base64,${question.question_img}`}
-            alt="Question"
+            src={`http://localhost:3081/uploads/${questionData.question.documen_name}/${questionData.question.questionImgName}`}
+            alt={`Question ${questionData.question.question_id}`}
           />
+            {/* <input type="file" accept="image/*" onChange={handleQuestionImageChange} /> */}
+            <input type="file" id={`question${questionData.question_id}`} />
+            <input
+                type="button"
+                value="Change"
+                onClick={() =>
+                  handlechange(
+                    "question",
+                    questionData.question_id,
+                    document.getElementById(`question${questionData.question_id}`).files[0]
+                  )
+                }
+              />  
         </div>
+      )}
 
-        {/* {data.options &&
-          data.options
-            .filter((opt) => opt.question_id === question.question_id)
-            .map((option) => (
-              <div
-                className="option"
-                key={`option_${option.option_id}`}
-                style={{ display: "flex", gap: "1rem" }}
-              >
-                <span>{OptionLabels[option.option_index]}</span>
-                <img
-                  src={`data:image/png;base64,${option.option_img}`}
-                  alt={`Option ${OptionLabels[option.option_index]}`}
-                />
-              </div>
-            ))} */}
+      {/* Display options */}
+      {questionData.options && (
+        <div>
+          {questionData.options.map((option, index) => (
+            <div key={index}>
+              <img
+                src={`http://localhost:3081/uploads/${questionData.question.documen_name}/${option.optionImgName}`}
+                alt={`Option ${option.option_id}`}
+              /> 
+               {/* <input type="file" accept="image/*" onChange={handleOptionImageChange} /> */}
+            </div>
+          ))}
+        </div>
+      )}
 
-        {data.solutions &&
-          data.solutions
-            .filter((sol) => sol.question_id === question.question_id)
-            .map((solution) => (
-              <div className="solution" key={`solution_${solution.solution_id}`}>
-                <h3>solution </h3>
-                <img
-                  src={`data:image/png;base64,${solution.solution_img}`}
-                  alt="Solution"
-                />
-              </div>
-            ))}
-
-        {data.answers &&
-          data.answers
-            .filter((ans) => ans.question_id === question.question_id)
-            .map((answer) => (
-              <div key={`answer_${answer.answer_id}`}>
-                <h3>Answer</h3>
-                {answer.answer_text}
-              </div>
-            ))}
-
-        {data.marks &&
-          data.marks
-            .filter((markes) => markes.question_id === question.question_id)
-            .map((markes) => (
-              <div key={`marks_${markes.markes_id}`}>
-                <h3>Marks</h3>
-                {markes.marks_text}
-              </div>
-            ))}
-
-        {data.qtypes &&
-          data.qtypes
-            .filter((qtype) => qtype.question_id === question.question_id)
-            .map((qtype) => (
-              <div key={`qtype_${qtype.qtype_id}`}>
-                <h3>QType</h3>
-                {qtype.qtype_text}
-              </div>
-            ))}
+      {/* Display solution */}
+      {questionData.solution && (
+        <div>
+          <img
+            src={`http://localhost:3081/uploads/${questionData.question.documen_name}/${questionData.solution.solutionImgName}`}
+            alt={`Solution ${questionData.solution.solution_id}`}
+          />
+            {/* <input type="file" accept="image/*" onChange={handleSolutionImageChange} /> */}
+        </div>
+      )}
+          {/* <button onClick={handleImageUpload}>Upload Images</button> */}
+     
       </div>
-      <button>
-        <Link to={`/singleQuetionRAU/${question.question_id}`}>update</Link>
-      </button>
-    </div>
-  ))}
-
-
       
-      </div>
- 
     </div>
-   
     </div>
- 
 </div>
     </div>
   );

@@ -85,7 +85,7 @@ const [documentData,setDocumentData] = useState([]);
                   <td  >
                     <div className="EditDelete_-btns">
                     <Link className="Ots_-edit " 
-                      to={`/getSubjectData/${item.subjectId}/${item.testCreationTableId}/${item.sectionId}`}
+                      to={`/getSubjectData/${item.testCreationTableId}/${item.subjectId}/${item.sectionId}`}
                     >
                       Open Document
                     </Link>

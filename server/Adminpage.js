@@ -34,6 +34,21 @@ const storage = multer.diskStorage({
     // cb(null, file.originalname);
   },
 });
+// const storage = multer.diskStorage({
+//   destination: async (req, file, cb) => {
+//     try {
+//       const uploadDir = path.join('uploads', req.body.documentName);
+//       await fs.mkdir(uploadDir, { recursive: true });
+//       cb(null, uploadDir);
+//     } catch (error) {
+//       console.error('Error creating upload directory:', error);
+//       cb(error);
+//     }
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, Date.now() + path.extname(file.originalname));
+//   },
+// });
 
 const upload = multer({ storage });
 
@@ -3104,13 +3119,236 @@ res.json(test);
   app.get('/sortidRAU/:testCreationTableId/:subjectId/:sectionId' ,async(req,res) =>{
     const { testCreationTableId,subjectId,sectionId} = req.params;
     try{
-const [rows] =await db.query( `SELECT s.question_id ,q.testCreationTableId,q.sectionId,s.sort_id,s.sortid_text FROM sortid s INNER JOIN questions AS q ON s.question_id=q.question_id WHERE q.testCreationTableId=? AND q.subjectId=? AND q.sectionId=? `,[ testCreationTableId,subjectId,sectionId] );
+const [rows] =await db.query( `SELECT s.question_id ,q.testCreationTableId,q.sectionId,s.sort_id,s.sortid_text FROM sortid s INNER JOIN questions AS q ON s.question_id=q.question_id WHERE q.testCreationTableId=? AND q.subjectId=?  `,[ testCreationTableId,subjectId,sectionId] );
 res.json(rows);
     }catch (error) {
       console.error('Error fetching sections data:', error);
       res.status(500).json({ error: 'Internal Server Error' });
     }
   })
+
+
+
+
+//   app.get('/quizRAU/:question_id' ,async(req,res) =>{
+//     const {question_id} = req.params;
+//     try{
+//   const [rows] =await db.query( `SELECT
+//   q.question_id, q.questionImgName,
+//   o.option_id, o.optionImgName,
+//   s.solution_id, s.solutionImgName,
+//   a.answer_id, a.answer_text,
+//   qt.qtypeId, qt.qtype_text,
+//   m.markesId, m.marks_text,
+//   si.sort_id, si.question_id,
+//   doc.documen_name, doc.document_Id 
+// FROM
+//   questions q
+// LEFT OUTER JOIN options o ON q.question_id = o.question_id
+// LEFT OUTER JOIN solution s ON q.question_id = s.question_id
+// LEFT OUTER JOIN answer a ON q.question_id = a.question_id
+// LEFT OUTER JOIN qtype qt ON q.question_id = qt.question_id
+// LEFT OUTER JOIN marks m ON q.question_id = m.question_id
+// LEFT OUTER JOIN sortid si ON q.question_id = si.question_id
+// LEFT OUTER JOIN ots_document doc ON q.testCreationTableId = doc.testCreationTableId  
+// WHERE
+//   si.question_id = 291;
+// `,[ question_id] );
+//   console.log('Rows:', rows);
+//   res.json(rows);
+//     }catch (error) {
+//       console.error('Error fetching sections data:', error);
+//       res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   })
+app.get('/quizRAU/:question_id', async (req, res) => {
+  const { question_id } = req.params;
+  try {
+    const [rows] = await db.query(`
+      SELECT
+        q.question_id, q.questionImgName,
+        o.option_id, o.optionImgName,
+        s.solution_id, s.solutionImgName,
+        doc.documen_name
+      FROM
+        questions q
+      LEFT OUTER JOIN options o ON q.question_id = o.question_id
+      LEFT OUTER JOIN solution s ON q.question_id = s.question_id
+      LEFT OUTER JOIN ots_document doc ON q.testCreationTableId = doc.testCreationTableId
+      WHERE
+        q.question_id =?;
+    `, [question_id]);
+
+    const questionData = {
+      question: {
+        question_id: rows[0].question_id,
+        questionImgName: rows[0].questionImgName,
+        documen_name: rows[0].documen_name,
+        // Include other question details...
+      },
+      options: rows.map(option => ({
+        option_id: option.option_id,
+        optionImgName: option.optionImgName,
+        // Include other option details...
+      })),
+      solution: {
+        solution_id: rows[0].solution_id,
+        solutionImgName: rows[0].solutionImgName,
+        // Include other solution details...
+      }
+    };
+
+    res.json(questionData);
+  } catch (error) {
+    console.error('Error fetching question data:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.get('/fulldocimages/:testCreationTableId/:subjectId/:sectionId', async (req, res) => {
+  const { testCreationTableId, subjectId, sectionId } = req.params;
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        q.question_id, q.questionImgName, 
+        o.option_id, o.optionImgName, 
+        s.solution_id, s.solutionImgName, 
+        doc.documen_name, doc.sectionId, doc.subjectId, doc.testCreationTableId 
+      FROM 
+        questions q 
+        LEFT OUTER JOIN options o ON q.question_id = o.question_id 
+        LEFT OUTER JOIN solution s ON q.question_id = s.question_id 
+        LEFT OUTER JOIN ots_document doc ON q.testCreationTableId = doc.testCreationTableId 
+      WHERE 
+        doc.testCreationTableId = ? AND doc.subjectId = ? AND doc.sectionId = ?;
+    `, [testCreationTableId, subjectId, sectionId]);
+
+    // Check if rows is not empty
+    if (rows.length > 0) {
+      const questionData = {
+        questions: [],
+      };
+
+      // Organize data into an array of questions
+      rows.forEach(row => {
+        const existingQuestion = questionData.questions.find(q => q.question_id === row.question_id);
+
+        if (existingQuestion) {
+          // Question already exists, add option to the existing question
+          existingQuestion.options.push({
+            option_id: row.option_id,
+            optionImgName: row.optionImgName,
+          });
+        } else {
+          // Question doesn't exist, create a new question
+          const newQuestion = {
+            question_id: row.question_id,
+            questionImgName: row.questionImgName,
+            documen_name: row.documen_name,
+            options: [
+              {
+                option_id: row.option_id,
+                optionImgName: row.optionImgName,
+              },
+            ],
+            solution: {
+              solution_id: row.solution_id,
+              solutionImgName: row.solutionImgName,
+            },
+          };
+
+          questionData.questions.push(newQuestion);
+        }
+      });
+
+      res.json(questionData);
+    } else {
+      // Handle the case where no rows are returned (empty result set)
+      res.status(404).json({ error: 'No data found' });
+    }
+  } catch (error) {
+    console.error('Error fetching question data:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+app.post('/uploadImages', upload.fields([
+  { name: 'questionImage', maxCount: 1 },
+  { name: 'optionImage', maxCount: 1 },
+  { name: 'solutionImage', maxCount: 1 },
+]), async (req, res) => {
+  try {
+    // Check if req.files is defined and contains the expected properties
+    if (!req.files || !req.files.questionImage || !req.files.optionImage || !req.files.solutionImage) {
+      return res.status(400).json({ success: false, message: 'Invalid request. Ensure all images are provided.' });
+    }
+
+    const { questionImage, optionImage, solutionImage } = req.files;
+
+    // Assuming you have a database table named 'images' with columns 'question_path', 'option_path', 'solution_path', and 'document_name'
+    const [rows] = await db.execute(`
+      INSERT INTO images (questionImgName, optionImgName, solutionImgName, document_name)
+      VALUES (?, ?, ?, ?)
+    `, [
+      questionImage[0]?.filename || '',
+      optionImage[0]?.filename || '',
+      solutionImage[0]?.filename || '',
+      req.body.documentName || '', // Assuming you send documentName in the request body
+    ]);
+
+    res.json({ success: true, message: 'Images uploaded successfully' });
+  } catch (error) {
+    console.error('Error uploading images:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+});
+
+// Endpoint to fetch sections based on subject and testCreationTableId
+// app.get('/sectionRAU/:subjectId/:testCreationTableId', async (req, res) => {
+//   const { subjectId, testCreationTableId } = req.params;
+
+//   try {
+//     const [rows] = await db.query(
+//       'SELECT s.sectionName, s.sectionId, s.testCreationTableId, s.subjectId FROM sections s JOIN test_creation_table tt ON s.testCreationTableId = tt.testCreationTableId WHERE s.subjectId = ? AND s.testCreationTableId = ?',
+//       [subjectId, testCreationTableId]
+//     );
+
+//     if (rows.length === 0) {
+//       // No sections found, directly fetch question numbers
+//       return fetchQuestionsWithDefaultSection(subjectId, testCreationTableId, null, res);
+//     }
+
+//     res.json(rows);
+//   } catch (error) {
+//     console.error('Error fetching sections data:', error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
+// // Helper function to fetch questions with a default section (null or an appropriate default value)
+// async function fetchQuestionsWithDefaultSection(subjectId, testCreationTableId, sectionId, res) {
+//   try {
+//     const [questions] = await db.query(
+//       `SELECT s.question_id, q.testCreationTableId, q.sectionId, s.sort_id, s.sortid_text
+//        FROM sortid s
+//        INNER JOIN questions AS q ON s.question_id = q.question_id
+//        WHERE q.testCreationTableId = ? AND q.subjectId = ? AND (q.sectionId = ? OR q.sectionId IS NULL)`,
+//       [testCreationTableId, subjectId, sectionId]
+//     );
+
+//     res.json(questions);
+//   } catch (error) {
+//     console.error('Error fetching questions data:', error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// }
+
+// // Endpoint to fetch question numbers based on subject, testCreationTableId, and sectionId
+// app.get('/sortidRAU/:testCreationTableId/:subjectId/:sectionId', async (req, res) => {
+//   const { testCreationTableId, subjectId, sectionId } = req.params;
+//   fetchQuestionsWithDefaultSection(subjectId, testCreationTableId, sectionId, res);
+// });
 
 
 
@@ -3215,33 +3453,7 @@ app.put("/updateQuestion/:questionId", upload.array("images"), async (req, res) 
   }
 });
 
-app.get('/quizRAU/:question_id' ,async(req,res) =>{
-  const {question_id} = req.params;
-  try{
-const [rows] =await db.query( `SELECT
-q.question_id, q.questionImgName,
-o.option_id, o.optionImgName,
-s.solution_id, s.solutionImgName,
-a.answer_id, a.answer_text,
-qt.qtypeId, qt.qtype_text,
-m.markesId, m.marks_text,
-si.sort_id, si.question_id
-FROM
-questions q
-LEFT OUTER JOIN options o ON q.question_id = o.question_id
-LEFT OUTER JOIN solution s ON q.question_id = s.question_id
-LEFT OUTER JOIN answer a ON q.question_id = a.question_id
-LEFT OUTER JOIN qtype qt ON q.question_id = qt.question_id
-LEFT OUTER JOIN marks m ON q.question_id = m.question_id
-LEFT OUTER JOIN sortid si ON q.question_id = si.question_id
-WHERE si.question_id = ?;
-`,[ question_id] );
-res.json(rows);
-  }catch (error) {
-    console.error('Error fetching sections data:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-})
+
 
 //  app.get("/quiz/:sort_id", async (req, res) => {
 //   // console.log('Received request with parameters:', req.params);
@@ -3542,48 +3754,7 @@ app.post('/upload', upload.single('document'), async (req, res) => {
       images.push(imageBuffer);
     });
  
-    // let Question_id;
-    // let question_id=[];
  
-    // for (let i = 0; i < images.length; i++) {
-    //   const j = i % 6; // Calculate the index within the 6-image cycle
- 
-    //   // Save the snapshot image as a PNG file
-    //   const imageName = `snapshot_${Math.floor(i / 6) + 1}_${j}.png`;
-    //   const imagePath = `${outputDir}/${imageName}`;
-    //   await fs.writeFile(imagePath, images[i]);
- 
-    //   if (j === 0) {
-    //     // For the first image, save it as a question
-    //     const questionRecord = {
-    //       questionImgName: imageName,
-    //       testCreationTableId: req.body.testCreationTableId,
-    //       subjectId: req.body.subjectId,
-    //       document_Id: document_Id,
-    //       sectionId: req.body.sectionId
-    //     };
-    //     console.log(j);
-    //     Question_id = await insertRecord('questions', questionRecord);
-    //     question_id.push(Question_id)
-    //   } else {
-    //     // For subsequent images, save as options or solution
-    //     if (j < 5) {
-    //       const optionRecord = {
-    //         optionImgName: imageName,
-    //         question_id: Question_id
-    //       };
-    //       console.log(j);
-    //       await insertRecord('options', optionRecord);
-    //     } else {
-    //       const solutionRecord = {
-    //         solutionImgName: imageName,
-    //         question_id: Question_id
-    //       };
-    //       console.log(j);
-    //       await insertRecord('solution', solutionRecord);
-    //     }
-    //   }
-    // }
     let j=0;let image_index=0;
     let que_id=0;let k=1;
     console.log(textSections);
@@ -3728,272 +3899,591 @@ app.get('/image-list', async (req, res) => {
 // end
 
 //feaching imagesfrom upload folder
-app.get(
-  "/getSubjectData/:testCreationTableId/:subjectId/:sectionId",
-  async (req, res) => {
-    try {
-      const subjectId = req.params.subjectId;
-      const testCreationTableId = req.params.testCreationTableId;
-      const sectionId = req.params.sectionId;
+// app.get("/getSubjectData/:testCreationTableId/:subjectId/:sectionId",
+//   async (req, res) => {
+//     try {
+//       const subjectId = req.params.subjectId;
+//       const testCreationTableId = req.params.testCreationTableId;
+//       const sectionId = req.params.sectionId;
  
-      // Fetch document data based on subjectId, testCreationTableId, and sectionId
-      const documentData = await dbHelper.getDocumentBySubjectAndTestCreationIdSectionId(
-        subjectId,
-        testCreationTableId,
-        sectionId
-      );
+//       // Fetch document data based on subjectId, testCreationTableId, and sectionId
+//       const documentData = await dbHelper.getDocumentBySubjectAndTestCreationIdSectionId(
+//         subjectId,
+//         testCreationTableId,
+//         sectionId
+//       );
  
-      if (!documentData) {
-        return res.status(404).send("Document not found");
-      }
+//       if (!documentData) {
+//         return res.status(404).send("Document not found");
+//       }
  
-      const document_Id = documentData.document_Id;
+//       const document_Id = documentData.document_Id;
  
-      // Fetch question data based on subjectId, document_Id, and sectionId
-      const questions = await dbHelper.getQuestionsBySubjectAndDocumentId(
-        subjectId,
-        document_Id,
-        sectionId
-      );
+//       // Fetch question data based on subjectId, document_Id, and sectionId
+//       const questions = await dbHelper.getQuestionsBySubjectAndDocumentId(
+//         subjectId,
+//         document_Id,
+//         sectionId
+//       );
  
-      // Fetch option data based on questions and document_Id
-      const options = await dbHelper.getOptionsByQuestionsAndDocumentId(
-        questions,
-        document_Id
-      );
+//       // Fetch option data based on questions and document_Id
+//       const options = await dbHelper.getOptionsByQuestionsAndDocumentId(
+//         questions,
+//         document_Id
+//       );
  
-      // Fetch solution data based on questions and document_Id
-      const solutions = await dbHelper.getSolutionsByQuestionsAndDocumentId(
-        questions,
-        document_Id
-      );
+//       // Fetch solution data based on questions and document_Id
+//       const solutions = await dbHelper.getSolutionsByQuestionsAndDocumentId(
+//         questions,
+//         document_Id
+//       );
  
-      // Fetch answers data based on questions and document_Id
-      const answers = await dbHelper.getAnswersByQuestionsAndDocumentId(
-        questions,
-        document_Id
-      );
+//       // Fetch answers data based on questions and document_Id
+//       const answers = await dbHelper.getAnswersByQuestionsAndDocumentId(
+//         questions,
+//         document_Id
+//       );
  
-      // Fetch marks data based on questions and document_Id
-      const marks = await dbHelper.getMarksByQuestionsAndDocumentId(
-        questions,
-        document_Id
-      );
+//       // Fetch marks data based on questions and document_Id
+//       const marks = await dbHelper.getMarksByQuestionsAndDocumentId(
+//         questions,
+//         document_Id
+//       );
  
-      // Fetch qtypes data based on questions and document_Id
-      const qtypes = await dbHelper.getQTypesByQuestionsAndDocumentId(
-        questions,
-        document_Id
-      );
+//       // Fetch qtypes data based on questions and document_Id
+//       const qtypes = await dbHelper.getQTypesByQuestionsAndDocumentId(
+//         questions,
+//         document_Id
+//       );
  
-      // Combine images
-      const combinedImages = dbHelper.combineImage(
-        questions,
-        options,
-        solutions
-      );
+//       // Combine images
+//       const combinedImages = dbHelper.combineImage(
+//         questions,
+//         options,
+//         solutions
+//       );
  
-      // Respond with the fetched data
-      res.json({
-        document: documentData,
-        questions,
-        options,
-        solutions,
-        answers,
-        marks,
-        qtypes,
-        combinedImages,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).send("Error fetching data from the database.");
-    }
-  }
-);
-class DatabaseHelper {
-  constructor(db) {
-    this.db = db;
-  }
+//       // Respond with the fetched data
+//       res.json({
+//         document: documentData,
+//         questions,
+//         options,
+//         solutions,
+//         answers,
+//         marks,
+//         qtypes,
+//         combinedImages,
+//       });
+//     } catch (error) {
+//       console.error(error);
+//       res.status(500).send("Error fetching data from the database.");
+//     }
+//   }
+// );
+// class DatabaseHelper {
+//   constructor(db) {
+//     this.db = db;
+//   }
  
-  async getDocumentBySubjectAndTestCreationIdSectionId(
-    subjectId,
-    testCreationTableId,
-    sectionId
-  ) {
-    try {
-      const query = `
-      SELECT document_Id, testCreationTableId, documen_name
-      FROM ots_document
-      WHERE subjectId = ? AND testCreationTableId = ? AND sectionId = ?
-    `;
-      const [result] = await this.db.query(query, [
-        subjectId,
-        testCreationTableId,
-        sectionId,
-      ]);
-      return result[0];
-    } catch (err) {
-      console.error(`Error fetching document details: ${err}`);
-      throw err;
-    }
-  }
+//   async getDocumentBySubjectAndTestCreationIdSectionId(
+//     subjectId,
+//     testCreationTableId,
+//     sectionId
+//   ) {
+//     try {
+//       const query = `
+//       SELECT document_Id, testCreationTableId, documen_name
+//       FROM ots_document
+//       WHERE subjectId = ? AND testCreationTableId = ? AND sectionId = ?
+//     `;
+//       const [result] = await this.db.query(query, [
+//         subjectId,
+//         testCreationTableId,
+//         sectionId,
+//       ]);
+//       return result[0];
+//     } catch (err) {
+//       console.error(`Error fetching document details: ${err}`);
+//       throw err;
+//     }
+//   }
  
-  // Reusable function to get questions data based on subjectId and document_Id
-  async getQuestionsBySubjectAndDocumentId(subjectId, document_Id) {
-    try {
-      const query = `
-      SELECT question_id, questionImgName
-      FROM questions
-      WHERE subjectId = ? AND document_Id = ?  
-    `;
-      const [results] = await this.db.query(query, [subjectId, document_Id]);
-      const questionsWithBase64 = results.map((question) => ({
-        question_id: question.question_id,
-        questionImgName: question.questionImgName,
-      }));
-      return questionsWithBase64;
-    } catch (err) {
-      console.error(`Error fetching questions: ${err}`);
-      throw err;
-    }
-  }
+//   // Reusable function to get questions data based on subjectId and document_Id
+//   async getQuestionsBySubjectAndDocumentId(subjectId, document_Id) {
+//     try {
+//       const query = `
+//       SELECT question_id, questionImgName
+//       FROM questions
+//       WHERE subjectId = ? AND document_Id = ?  
+//     `;
+//       const [results] = await this.db.query(query, [subjectId, document_Id]);
+//       const questionsWithBase64 = results.map((question) => ({
+//         question_id: question.question_id,
+//         questionImgName: question.questionImgName,
+//       }));
+//       return questionsWithBase64;
+//     } catch (err) {
+//       console.error(`Error fetching questions: ${err}`);
+//       throw err;
+//     }
+//   }
  
-  // Reusable function to get options data based on questions and document_Id
-  async getOptionsByQuestionsAndDocumentId(questions, document_Id) {
-    try {
-      const questionIds = questions.map((question) => question.question_id);
-      const query = `
-      SELECT question_id, optionImgName
-      FROM options
-      WHERE question_id IN (?)
-    `;
-      const [results] = await this.db.query(query, [questionIds, document_Id]);
+//   // Reusable function to get options data based on questions and document_Id
+//   async getOptionsByQuestionsAndDocumentId(questions, document_Id) {
+//     try {
+//       const questionIds = questions.map((question) => question.question_id);
+//       const query = `
+//       SELECT question_id, optionImgName
+//       FROM options
+//       WHERE question_id IN (?)
+//     `;
+//       const [results] = await this.db.query(query, [questionIds, document_Id]);
  
-      const optionsWithBase64 = results.map((option) => ({
-        question_id: option.question_id,
-        optionImgName: option.optionImgName,
-      }));
+//       const optionsWithBase64 = results.map((option) => ({
+//         question_id: option.question_id,
+//         optionImgName: option.optionImgName,
+//       }));
  
-      return optionsWithBase64;
-    } catch (err) {
-      console.error(`Error fetching options: ${err.message}`);
-      throw err;
-    }
-  }
+//       return optionsWithBase64;
+//     } catch (err) {
+//       console.error(`Error fetching options: ${err.message}`);
+//       throw err;
+//     }
+//   }
  
-  // Reusable function to get solutions data based on questions and document_Id
-  async getSolutionsByQuestionsAndDocumentId(questions, document_Id) {
-    try {
-      const questionIds = questions.map((question) => question.question_id);
-      const query = `
-      SELECT question_id, solutionImgName
-      FROM solution
-      WHERE question_id IN (?)
-    `;
-      const [results] = await db.query(query, [questionIds, document_Id]);
+//   // Reusable function to get solutions data based on questions and document_Id
+//   async getSolutionsByQuestionsAndDocumentId(questions, document_Id) {
+//     try {
+//       const questionIds = questions.map((question) => question.question_id);
+//       const query = `
+//       SELECT question_id, solutionImgName
+//       FROM solution
+//       WHERE question_id IN (?)
+//     `;
+//       const [results] = await db.query(query, [questionIds, document_Id]);
  
-      // Convert BLOB data to base64 for sending in the response
-      const solutionsWithBase64 = results.map((solution) => ({
-        question_id: solution.question_id,
-        solutionImgName: solution.solutionImgName,
-      }));
+//       // Convert BLOB data to base64 for sending in the response
+//       const solutionsWithBase64 = results.map((solution) => ({
+//         question_id: solution.question_id,
+//         solutionImgName: solution.solutionImgName,
+//       }));
  
-      return solutionsWithBase64;
-    } catch (err) {
-      console.error(`Error fetching solutions: ${err}`);
-      throw err;
-    }
-  }
+//       return solutionsWithBase64;
+//     } catch (err) {
+//       console.error(`Error fetching solutions: ${err}`);
+//       throw err;
+//     }
+//   }
  
-  async getAnswersByQuestionsAndDocumentId(questions, document_Id) {
-    try {
-      const questionIds = questions.map((question) => question.question_id);
-      const query = `
-      SELECT answer_id, question_id, answer_text
-      FROM answer
-      WHERE question_id IN (?)
-    `;
-      const [results] = await db.query(query, [questionIds, document_Id]);
-      const answers = results.map((answer) => ({
-        answer_id: answer.answer_id,
-        question_id: answer.question_id,
-        answer_text: answer.answer_text,
-      }));
+//   async getAnswersByQuestionsAndDocumentId(questions, document_Id) {
+//     try {
+//       const questionIds = questions.map((question) => question.question_id);
+//       const query = `
+//       SELECT answer_id, question_id, answer_text
+//       FROM answer
+//       WHERE question_id IN (?)
+//     `;
+//       const [results] = await db.query(query, [questionIds, document_Id]);
+//       const answers = results.map((answer) => ({
+//         answer_id: answer.answer_id,
+//         question_id: answer.question_id,
+//         answer_text: answer.answer_text,
+//       }));
  
-      return answers;
-    } catch (err) {
-      console.error(`Error fetching answers: ${err.message}`);
-      throw err;
-    }
-  }
-  async getMarksByQuestionsAndDocumentId(questions, document_Id) {
-    try {
-      const questionIds = questions.map((question) => question.question_id);
-      const query = `
-      SELECT  markesId, marks_text, question_id
-      FROM marks
-      WHERE question_id IN (?)
-    `;
-      const [results] = await db.query(query, [questionIds, document_Id]);
+//       return answers;
+//     } catch (err) {
+//       console.error(`Error fetching answers: ${err.message}`);
+//       throw err;
+//     }
+//   }
+//   async getMarksByQuestionsAndDocumentId(questions, document_Id) {
+//     try {
+//       const questionIds = questions.map((question) => question.question_id);
+//       const query = `
+//       SELECT  markesId, marks_text, question_id
+//       FROM marks
+//       WHERE question_id IN (?)
+//     `;
+//       const [results] = await db.query(query, [questionIds, document_Id]);
  
-      const marks = results.map((mark) => ({
-        markesId: mark.markesId,
-        marks_text: mark.marks_text,
-        question_id: mark.question_id,
-      }));
+//       const marks = results.map((mark) => ({
+//         markesId: mark.markesId,
+//         marks_text: mark.marks_text,
+//         question_id: mark.question_id,
+//       }));
  
-      return marks;
-    } catch (err) {
-      console.error(`Error fetching marks: ${err.message}`);
-      throw err;
-    }
-  }
+//       return marks;
+//     } catch (err) {
+//       console.error(`Error fetching marks: ${err.message}`);
+//       throw err;
+//     }
+//   }
  
-  async getQTypesByQuestionsAndDocumentId(questions, document_Id) {
-    try {
-      const questionIds = questions.map((question) => question.question_id);
-      const query = `
-      SELECT qtypeId, qtype_text, question_id
-      FROM qtype
-      WHERE question_id IN (?)
-    `;
-      const [results] = await db.query(query, [questionIds, document_Id]);
+//   async getQTypesByQuestionsAndDocumentId(questions, document_Id) {
+//     try {
+//       const questionIds = questions.map((question) => question.question_id);
+//       const query = `
+//       SELECT qtypeId, qtype_text, question_id
+//       FROM qtype
+//       WHERE question_id IN (?)
+//     `;
+//       const [results] = await db.query(query, [questionIds, document_Id]);
  
-      const qtypes = results.map((qtype) => ({
-        qtypeId: qtype.qtypeId,
-        qtype_text: qtype.qtype_text,
-        question_id: qtype.question_id,
-      }));
+//       const qtypes = results.map((qtype) => ({
+//         qtypeId: qtype.qtypeId,
+//         qtype_text: qtype.qtype_text,
+//         question_id: qtype.question_id,
+//       }));
  
-      return qtypes;
-    } catch (err) {
-      console.error(`Error fetching qtypes: ${err.message}`);
-      throw err;
-    }
-  }
+//       return qtypes;
+//     } catch (err) {
+//       console.error(`Error fetching qtypes: ${err.message}`);
+//       throw err;
+//     }
+//   }
  
-  combineImage(questions, options, solutions) {
-    const combinedImages = [];
+//   combineImage(questions, options, solutions) {
+//     const combinedImages = [];
  
-    for (let i = 0; i < questions.length; i++) {
-      const questionImage = questions[i].questionImgName;
-      const optionImages = options
-        .filter((opt) => opt.question_id === questions[i].question_id)
-        .map((opt) => opt.optionImgName);
-      const solutionImage = solutions.find(
-        (sol) => sol.question_id === questions[i].question_id
-      )?.solutionImgName;
-      combinedImages.push({
-        questionImage,
-        optionImages,
-        solutionImage,
-      });
-    }
-    return combinedImages;
-  }
-}
+//     for (let i = 0; i < questions.length; i++) {
+//       const questionImage = questions[i].questionImgName;
+//       const optionImages = options
+//         .filter((opt) => opt.question_id === questions[i].question_id)
+//         .map((opt) => opt.optionImgName);
+//       const solutionImage = solutions.find(
+//         (sol) => sol.question_id === questions[i].question_id
+//       )?.solutionImgName;
+//       combinedImages.push({
+//         questionImage,
+//         optionImages,
+//         solutionImage,
+//       });
+//     }
+//     return combinedImages;
+//   }
+// }
  
-const dbHelper = new DatabaseHelper(db);
+// const dbHelper = new DatabaseHelper(db);
+
+
+// app.get("/quiz/:question_id",
+//   async (req, res) => {
+//     try {
+//       const subjectId = req.params.subjectId;
+//       const testCreationTableId = req.params.testCreationTableId;
+//       const sectionId = req.params.sectionId;
+ 
+//       // Fetch document data based on subjectId, testCreationTableId, and sectionId
+//       const documentData = await dbHelper.getDocumentBySubjectAndTestCreationIdSectionId(
+//         subjectId,
+//         testCreationTableId,
+//         sectionId
+//       );
+ 
+//       if (!documentData) {
+//         return res.status(404).send("Document not found");
+//       }
+ 
+//       const document_Id = documentData.document_Id;
+ 
+//       // Fetch question data based on subjectId, document_Id, and sectionId
+//       const questions = await dbHelper.getQuestionsBySubjectAndDocumentId(
+//         subjectId,
+//         document_Id,
+//         sectionId
+//       );
+ 
+//       // Fetch option data based on questions and document_Id
+//       const options = await dbHelper.getOptionsByQuestionsAndDocumentId(
+//         questions,
+//         document_Id
+//       );
+ 
+//       // Fetch solution data based on questions and document_Id
+//       const solutions = await dbHelper.getSolutionsByQuestionsAndDocumentId(
+//         questions,
+//         document_Id
+//       );
+ 
+//       // Fetch answers data based on questions and document_Id
+//       const answers = await dbHelper.getAnswersByQuestionsAndDocumentId(
+//         questions,
+//         document_Id
+//       );
+ 
+//       // Fetch marks data based on questions and document_Id
+//       const marks = await dbHelper.getMarksByQuestionsAndDocumentId(
+//         questions,
+//         document_Id
+//       );
+ 
+//       // Fetch qtypes data based on questions and document_Id
+//       const qtypes = await dbHelper.getQTypesByQuestionsAndDocumentId(
+//         questions,
+//         document_Id
+//       );
+ 
+//       // Combine images
+//       const combinedImages = dbHelper.combineImage(
+//         questions,
+//         options,
+//         solutions
+//       );
+ 
+//       // Respond with the fetched data
+//       res.json({
+//         document: documentData,
+//         questions,
+//         options,
+//         solutions,
+//         answers,
+//         marks,
+//         qtypes,
+//         combinedImages,
+//       });
+//     } catch (error) {
+//       console.error(error);
+//       res.status(500).send("Error fetching data from the database.");
+//     }
+//   }
+// );
+// class DatabaseHelper {
+//   constructor(db) {
+//     this.db = db;
+//   }
+ 
+//   async getDocumentBySubjectAndTestCreationIdSectionId(
+//     subjectId,
+//     testCreationTableId,
+//     sectionId
+//   ) {
+//     try {
+//       const query = `
+//       SELECT document_Id, testCreationTableId, documen_name
+//       FROM ots_document
+//       WHERE subjectId = ? AND testCreationTableId = ? AND sectionId = ?
+//     `;
+//       const [result] = await this.db.query(query, [
+//         subjectId,
+//         testCreationTableId,
+//         sectionId,
+//       ]);
+//       return result[0];
+//     } catch (err) {
+//       console.error(`Error fetching document details: ${err}`);
+//       throw err;
+//     }
+//   }
+ 
+//   // Reusable function to get questions data based on subjectId and document_Id
+//   async getQuestionsBySubjectAndDocumentId(subjectId, document_Id) {
+//     try {
+//       const query = `
+//       SELECT question_id, questionImgName
+//       FROM questions
+//       WHERE subjectId = ? AND document_Id = ?  
+//     `;
+//       const [results] = await this.db.query(query, [subjectId, document_Id]);
+//       const questionsWithBase64 = results.map((question) => ({
+//         question_id: question.question_id,
+//         questionImgName: question.questionImgName,
+//       }));
+//       return questionsWithBase64;
+//     } catch (err) {
+//       console.error(`Error fetching questions: ${err}`);
+//       throw err;
+//     }
+//   }
+ 
+//   // Reusable function to get options data based on questions and document_Id
+//   async getOptionsByQuestionsAndDocumentId(questions, document_Id) {
+//     try {
+//       const questionIds = questions.map((question) => question.question_id);
+//       const query = `
+//       SELECT question_id, optionImgName
+//       FROM options
+//       WHERE question_id IN (?)
+//     `;
+//       const [results] = await this.db.query(query, [questionIds, document_Id]);
+ 
+//       const optionsWithBase64 = results.map((option) => ({
+//         question_id: option.question_id,
+//         optionImgName: option.optionImgName,
+//       }));
+ 
+//       return optionsWithBase64;
+//     } catch (err) {
+//       console.error(`Error fetching options: ${err.message}`);
+//       throw err;
+//     }
+//   }
+ 
+//   // Reusable function to get solutions data based on questions and document_Id
+//   async getSolutionsByQuestionsAndDocumentId(questions, document_Id) {
+//     try {
+//       const questionIds = questions.map((question) => question.question_id);
+//       const query = `
+//       SELECT question_id, solutionImgName
+//       FROM solution
+//       WHERE question_id IN (?)
+//     `;
+//       const [results] = await db.query(query, [questionIds, document_Id]);
+ 
+//       // Convert BLOB data to base64 for sending in the response
+//       const solutionsWithBase64 = results.map((solution) => ({
+//         question_id: solution.question_id,
+//         solutionImgName: solution.solutionImgName,
+//       }));
+ 
+//       return solutionsWithBase64;
+//     } catch (err) {
+//       console.error(`Error fetching solutions: ${err}`);
+//       throw err;
+//     }
+//   }
+ 
+//   async getAnswersByQuestionsAndDocumentId(questions, document_Id) {
+//     try {
+//       const questionIds = questions.map((question) => question.question_id);
+//       const query = `
+//       SELECT answer_id, question_id, answer_text
+//       FROM answer
+//       WHERE question_id IN (?)
+//     `;
+//       const [results] = await db.query(query, [questionIds, document_Id]);
+//       const answers = results.map((answer) => ({
+//         answer_id: answer.answer_id,
+//         question_id: answer.question_id,
+//         answer_text: answer.answer_text,
+//       }));
+ 
+//       return answers;
+//     } catch (err) {
+//       console.error(`Error fetching answers: ${err.message}`);
+//       throw err;
+//     }
+//   }
+//   async getMarksByQuestionsAndDocumentId(questions, document_Id) {
+//     try {
+//       const questionIds = questions.map((question) => question.question_id);
+//       const query = `
+//       SELECT  markesId, marks_text, question_id
+//       FROM marks
+//       WHERE question_id IN (?)
+//     `;
+//       const [results] = await db.query(query, [questionIds, document_Id]);
+ 
+//       const marks = results.map((mark) => ({
+//         markesId: mark.markesId,
+//         marks_text: mark.marks_text,
+//         question_id: mark.question_id,
+//       }));
+ 
+//       return marks;
+//     } catch (err) {
+//       console.error(`Error fetching marks: ${err.message}`);
+//       throw err;
+//     }
+//   }
+ 
+//   async getQTypesByQuestionsAndDocumentId(questions, document_Id) {
+//     try {
+//       const questionIds = questions.map((question) => question.question_id);
+//       const query = `
+//       SELECT qtypeId, qtype_text, question_id
+//       FROM qtype
+//       WHERE question_id IN (?)
+//     `;
+//       const [results] = await db.query(query, [questionIds, document_Id]);
+ 
+//       const qtypes = results.map((qtype) => ({
+//         qtypeId: qtype.qtypeId,
+//         qtype_text: qtype.qtype_text,
+//         question_id: qtype.question_id,
+//       }));
+ 
+//       return qtypes;
+//     } catch (err) {
+//       console.error(`Error fetching qtypes: ${err.message}`);
+//       throw err;
+//     }
+//   }
+ 
+//   combineImage(questions, options, solutions) {
+//     const combinedImages = [];
+ 
+//     for (let i = 0; i < questions.length; i++) {
+//       const questionImage = questions[i].questionImgName;
+//       const optionImages = options
+//         .filter((opt) => opt.question_id === questions[i].question_id)
+//         .map((opt) => opt.optionImgName);
+//       const solutionImage = solutions.find(
+//         (sol) => sol.question_id === questions[i].question_id
+//       )?.solutionImgName;
+//       combinedImages.push({
+//         questionImage,
+//         optionImages,
+//         solutionImage,
+//       });
+//     }
+//     return combinedImages;
+//   }
+// }
+ 
+
+
+
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+
+
+   // let Question_id;
+    // let question_id=[];
+ 
+    // for (let i = 0; i < images.length; i++) {
+    //   const j = i % 6; // Calculate the index within the 6-image cycle
+ 
+    //   // Save the snapshot image as a PNG file
+    //   const imageName = `snapshot_${Math.floor(i / 6) + 1}_${j}.png`;
+    //   const imagePath = `${outputDir}/${imageName}`;
+    //   await fs.writeFile(imagePath, images[i]);
+ 
+    //   if (j === 0) {
+    //     // For the first image, save it as a question
+    //     const questionRecord = {
+    //       questionImgName: imageName,
+    //       testCreationTableId: req.body.testCreationTableId,
+    //       subjectId: req.body.subjectId,
+    //       document_Id: document_Id,
+    //       sectionId: req.body.sectionId
+    //     };
+    //     console.log(j);
+    //     Question_id = await insertRecord('questions', questionRecord);
+    //     question_id.push(Question_id)
+    //   } else {
+    //     // For subsequent images, save as options or solution
+    //     if (j < 5) {
+    //       const optionRecord = {
+    //         optionImgName: imageName,
+    //         question_id: Question_id
+    //       };
+    //       console.log(j);
+    //       await insertRecord('options', optionRecord);
+    //     } else {
+    //       const solutionRecord = {
+    //         solutionImgName: imageName,
+    //         question_id: Question_id
+    //       };
+    //       console.log(j);
+    //       await insertRecord('solution', solutionRecord);
+    //     }
+    //   }
+    // }
+
+
  //end
     // app.post('/upload', upload.single('document'), async (req, res) => {
     //   const docxFilePath = `uploads/${req.file.filename}`;
@@ -4503,9 +4993,3 @@ const dbHelper = new DatabaseHelper(db);
 //     res.status(500).send('Internal Server Error');
 //   }
 // });
-
-
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});

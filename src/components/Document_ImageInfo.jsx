@@ -183,132 +183,247 @@ import { Link, useParams } from "react-router-dom";
  
  
 function Document_ImageInfo() {
-  const [data, setData] = useState(null);
-  const { subjectId, testCreationTableId, sectionId } = useParams();
+  const [questionData, setQuestionData] = useState({});
+  const  { testCreationTableId, subjectId, sectionId } = useParams();
+
   useEffect(() => {
-    fetchData();
-  }, []);
-  const fetchData = async () => {
-    try {
-      const response = await fetch(
-        `http://localhost:3081/getSubjectData/${testCreationTableId}/${subjectId}/${sectionId}`
-      );
- 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`http://localhost:3081/fulldocimages/${testCreationTableId}/${subjectId}/${sectionId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setQuestionData(data);
+      } catch (error) {
+        console.error('Error fetching question data:', error);
       }
- 
-      const result = await response.json();
-      setData(result);
-    } catch (error) {
-      console.error("Error fetching data:", error.message);
-      // Handle the error, e.g., show an error message to the user
-    }
-  };
- 
-  if (!data) {
+    };
+
+    fetchData();
+  }, [testCreationTableId, subjectId, sectionId]);  // Update the dependency array
+
+  if (!questionData.questions) {
     return <div>Loading...</div>;
   }
-  const OptionLabels = ["(a)", "(b)", "(c)", "(d)"];
-  // Render your component using the fetched data
-  return (
-    <div className="Document_-images_-container otsMainPages">
-      {/* Access data as needed, for example: */}
-      <h1>
-        {data.document.documen_name} {data.document.subjectId}
-        {data.document.testCreationTableId}
-      </h1>
-      {/* Map over questions and render them */}
-      <div
-        className="q1s"
-        style={{
-          display: "flex",
-          gap: "4rem",
-          flexDirection: "column",
-          width: "81vw",
-          margin: "2rem",
-        }}
-      >
-        {data.questions.map((question, index) => (
-          <div
-            className="outColor examSubjects_-contant"
-            style={{ background: "", padding: "2rem 2rem" }}
-          >
-            <div key={question.question_id}>
-              <div className="question" key={index}>
-                <h3 style={{ display: "flex", gap: "1rem" }}>
-                  {" "}
-                  <p>Question </p> {index + 1}
-                </h3>
+
+//   const [data, setData] = useState(null);
+//   const [questionData, setQuestionData] = useState({});
+//   const { question_id } = useParams();
+//   const { testCreationTableId,subjectId,sectionId } = useParams();
+//   // useEffect(() => {
+//   //   fetchData();
+//   // }, []);
+//   // const fetchData = async () => {
+//   //   try {
+//   //     const response = await fetch(
+//   //       `http://localhost:3081/getSubjectData/${testCreationTableId}/${subjectId}/${sectionId}`
+//   //     );
  
-                <img
-                  src={`http://localhost:3081/uploads/${data.document.documen_name}/${question.questionImgName}`}
-                  alt="sdfs"
-                />
-              </div>
-              {data.options
-                .filter((opt) => opt.question_id === question.question_id)
-                .map((option, index) => (
-                  <div
-                    className="option"
-                    key={option.question_id}
-                    style={{ display: "flex", gap: "1rem" }}
-                  >
-                    <span>{OptionLabels[index]}</span>
-                    <img
-                      src={`http://localhost:3081/uploads/${data.document.documen_name}/${option.optionImgName}`}
-                      alt={`Option ${OptionLabels[index]}`}/>
-                  </div>
-                ))}
+//   //     if (!response.ok) {
+//   //       throw new Error(`HTTP error! Status: ${response.status}`);
+//   //     }
  
-              {data.solutions
-                .filter((sol) => sol.question_id === question.question_id)
-                .map((solution) => (
-                  <div className="solution">
-                    <h3>solution </h3>
-                    <img
-                      key={solution.question_id}
-                      src={`http://localhost:3081/uploads/${data.document.documen_name}/${solution.solutionImgName}`}
-                      alt="Solution"
-                    />
-                  </div>
-                ))}
+//   //     const result = await response.json();
+//   //     setData(result);
+//   //   } catch (error) {
+//   //     console.error("Error fetching data:", error.message);
+//   //     // Handle the error, e.g., show an error message to the user
+//   //   }
+//   // };
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       try {
+//         const response = await fetch(`http://localhost:3081/fulldocimages/${testCreationTableId}/${subjectId}/${sectionId}`);
+//         if (!response.ok) {
+//           throw new Error(`HTTP error! Status: ${response.status}`);
+//         }
+
+//         const data = await response.json();
+//         setQuestionData(data);
+//       } catch (error) {
+//         console.error('Error fetching question data:', error);
+//       }
+//     };
+
+//     fetchData();
+//   }, [question_id]);
+//   if (!data) {
+//     return <div>Loading...</div>;
+//   }
+//   // const OptionLabels = ["(a)", "(b)", "(c)", "(d)"];
+//   // Render your component using the fetched data
+//   return (
+//     <div className="Document_-images_-container otsMainPages">
+//       {/* Access data as needed, for example: */}
+//       <h1>
+//         {questionData.document.documen_name} 
+//         {questionData.document.testCreationTableId}
+//         {questionData.document.subjectId}
+//       </h1>
+//       {/* Map over questions and render them */}
+//       <div
+//         className="q1s"
+//         style={{
+//           display: "flex",
+//           gap: "4rem",
+//           flexDirection: "column",
+//           width: "81vw",
+//           margin: "2rem",
+//         }}
+//       >
+//         {/* {data.questions.map((question, index) => (
+//           <div
+//             className="outColor examSubjects_-contant"
+//             style={{ background: "", padding: "2rem 2rem" }}
+//           >
+//             <div key={question.question_id}>
+//               <div className="question" key={index}>
+//                 <h3 style={{ display: "flex", gap: "1rem" }}>
+//                   {" "}
+//                   <p>Question </p> {index + 1}
+//                 </h3>
  
-              {data.answers
-                .filter((ans) => ans.question_id === question.question_id)
-                .map((answer) => (
-                  <div key={answer.answer_id}>
-                    <h3>Answer</h3>
-                    {answer.answer_text}
-                  </div>
-                ))}
+//                 <img
+//                   src={`http://localhost:3081/uploads/${data.document.documen_name}/${question.questionImgName}`}
+//                   alt="sdfs"
+//                 />
+//               </div>
+//               {data.options
+//                 .filter((opt) => opt.question_id === question.question_id)
+//                 .map((option, index) => (
+//                   <div
+//                     className="option"
+//                     key={option.question_id}
+//                     style={{ display: "flex", gap: "1rem" }}
+//                   >
+//                     <span>{OptionLabels[index]}</span>
+//                     <img
+//                       src={`http://localhost:3081/uploads/${data.document.documen_name}/${option.optionImgName}`}
+//                       alt={`Option ${OptionLabels[index]}`}/>
+//                   </div>
+//                 ))}
  
-              {data.marks
-                .filter((markes) => markes.question_id === question.question_id)
-                .map((markes) => (
-                  <div key={markes.markesId}>
-                    <h3>Marks</h3>
-                    {markes.marks_text}
-                  </div>
-                ))}
+//               {data.solutions
+//                 .filter((sol) => sol.question_id === question.question_id)
+//                 .map((solution) => (
+//                   <div className="solution">
+//                     <h3>solution </h3>
+//                     <img
+//                       key={solution.question_id}
+//                       src={`http://localhost:3081/uploads/${data.document.documen_name}/${solution.solutionImgName}`}
+//                       alt="Solution"
+//                     />
+//                   </div>
+//                 ))}
  
-              {data.qtypes
-                .filter((qtype) => qtype.question_id === question.question_id)
-                .map((qtype) => (
-                  <div key={qtype.qtypeId}>
-                    <h3>QType</h3>
-                    {qtype.qtype_text}
-                  </div>
-                ))}
+//               {data.answers
+//                 .filter((ans) => ans.question_id === question.question_id)
+//                 .map((answer) => (
+//                   <div key={answer.answer_id}>
+//                     <h3>Answer</h3>
+//                     {answer.answer_text}
+//                   </div>
+//                 ))}
+ 
+//               {data.marks
+//                 .filter((markes) => markes.question_id === question.question_id)
+//                 .map((markes) => (
+//                   <div key={markes.markesId}>
+//                     <h3>Marks</h3>
+//                     {markes.marks_text}
+//                   </div>
+//                 ))}
+ 
+//               {data.qtypes
+//                 .filter((qtype) => qtype.question_id === question.question_id)
+//                 .map((qtype) => (
+//                   <div key={qtype.qtypeId}>
+//                     <h3>QType</h3>
+//                     {qtype.qtype_text}
+//                   </div>
+//                 ))}
+//             </div>
+//             <Link>delete</Link>
+//             <Link>Update</Link>
+//           </div>
+//         ))} */}
+//         {questionData.question && (
+//         <div>
+//           <h3>Question {questionData.question.question_id}</h3>
+//           <img
+//             src={`http://localhost:3081/uploads/${questionData.question.documen_name}/${questionData.question.questionImgName}`}
+//             alt={`Question ${questionData.question.question_id}`}
+//           />
+//         </div>
+//       )}
+
+//       {/* Display options */}
+//       {questionData.options && (
+//         <div>
+//           {questionData.options.map((option, index) => (
+//             <div key={index}>
+//               <img
+//                 src={`http://localhost:3081/uploads/${questionData.question.documen_name}/${option.optionImgName}`}
+//                 alt={`Option ${option.option_id}`}
+//               />
+//             </div>
+//           ))}
+//         </div>
+//       )}
+
+//       {/* Display solution */}
+//       {questionData.solution && (
+//         <div>
+//           <img
+//             src={`http://localhost:3081/uploads/${questionData.question.documen_name}/${questionData.solution.solutionImgName}`}
+//             alt={`Solution ${questionData.solution.solution_id}`}
+//           />
+//         </div>
+//       )}
+//       </div>
+//     </div>
+//   );
+
+return (
+  <div className="otsMainPages">
+    {/* Map over questions and render them */}
+    {questionData.questions.map((question, index) => (
+      <div key={index} className="question-container">
+        <h3>Question {question.question_id}</h3>
+        <img
+          src={`http://localhost:3081/uploads/${question.documen_name}/${question.questionImgName}`}
+          alt={`Question ${question.question_id}`}
+        />
+
+        {/* Display options */}
+        <div className="options-container">
+          {question.options.map((option, optionIndex) => (
+            <div key={optionIndex}>
+              <img
+                src={`http://localhost:3081/uploads/${question.documen_name}/${option.optionImgName}`}
+                alt={`Option ${option.option_id}`}
+              />
             </div>
-            <Link>delete</Link>
-            <Link>Update</Link>
+          ))}
+        </div>
+
+        {/* Display solution */}
+        {question.solution && (
+          <div className="solution-container">
+            <h3>Solution</h3>
+            <img
+              src={`http://localhost:3081/uploads/${question.documen_name}/${question.solution.solutionImgName}`}
+              alt={`Solution ${question.solution.solution_id}`}
+            />
           </div>
-        ))}
+        )}
       </div>
-    </div>
-  );
+    ))}
+  </div>
+);
 }
- 
+
 export default Document_ImageInfo;
 

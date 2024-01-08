@@ -79,6 +79,7 @@ import Quiz from './components/Quiz.jsx'
 
 import Navbar from './Componentsvls/Navbar.jsx';
 import Topic from './Componentsvls/Topic.jsx';
+import YourComponent from './components/YourComponent.jsx'
 function App() {
   return (
     <Router>
@@ -114,14 +115,14 @@ function App() {
  
           {/* document list */}
           <Route
-              path="/getSubjectData/:subjectId/:testCreationTableId/:sectionId"
+              path="/getSubjectData/:testCreationTableId/:subjectId/:sectionId"
               element={<Document_ImageInfo />}
             />
             <Route path='/ReplaceAndUpdate' element={<ReplaceAndUpdate />}/>
 
 <Route path='/singleQuetionRAU/:question_id' element={<UpdateQuestion />}/>
 
- 
+<Route path='/YourComponent' element={<YourComponent />}/>
           {/* Frontend */}
           {/* <Route path='/HomeLandingPage' element={<HomeLandingPage/>}/>
         {/* <Route path='/CoursePage/:examId' element={<CoursePage/>} /> */}
